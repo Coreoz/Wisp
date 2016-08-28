@@ -2,11 +2,15 @@ package com.coreoz.plume.scheduler;
 
 import static org.fest.assertions.Assertions.assertThat;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import org.junit.Test;
 
 import com.coreoz.plume.scheduler.schedule.BasicSchedules;
+import com.coreoz.plume.scheduler.stats.SchedulerStats;
+
+import lombok.SneakyThrows;
 
 public class SchedulerTest {
 
@@ -19,15 +23,24 @@ public class SchedulerTest {
 			singleJob,
 			BasicSchedules.executeOnce(BasicSchedules.fixedDurationSchedule(1))
 		);
-		
-		waitOn(singleJob, () -> singleJob.executed, 50);
-		
+
+		waitOn(singleJob, () -> singleJob.countExecuted.get() > 0, 1000);
+
 		scheduler.gracefullyShutdown();
 
-		assertThat(singleJob.executed).isTrue();
+		assertThat(singleJob.countExecuted.get()).isEqualTo(1);
 	}
 
 	@Test
+	@SneakyThrows
+	public void check_all_ok() {
+		for(int i = 1; i <= 1000; i++) {
+			should_run_each_job_once();
+			System.out.println("iteration " + i + " done");
+		}
+	}
+
+//	@Test
 	public void should_run_each_job_once() throws InterruptedException {
 		Scheduler scheduler = new Scheduler(1);
 		SingleJob job1 = new SingleJob();
@@ -49,15 +62,15 @@ public class SchedulerTest {
 			BasicSchedules.executeOnce(BasicSchedules.fixedDurationSchedule(1))
 		);
 		Thread thread1 = new Thread(() -> {
-			waitOn(job1, () -> job1.executed, 50);
+			waitOn(job1, () -> job1.countExecuted.get() > 0, 1000);
 		});
 		thread1.start();
 		Thread thread2 = new Thread(() -> {
-			waitOn(job2, () -> job2.executed, 50);
+			waitOn(job2, () -> job2.countExecuted.get() > 0, 1000);
 		});
 		thread2.start();
 		Thread thread3 = new Thread(() -> {
-			waitOn(job3, () -> job3.executed, 50);
+			waitOn(job3, () -> job3.countExecuted.get() > 0, 1000);
 		});
 		thread3.start();
 
@@ -65,22 +78,26 @@ public class SchedulerTest {
 		thread2.join();
 		thread3.join();
 
+		SchedulerStats stats = scheduler.stats();
 		scheduler.gracefullyShutdown();
 
-		assertThat(job1.executed).isTrue();
-		assertThat(job2.executed).isTrue();
-		assertThat(job3.executed).isTrue();
+		assertThat(job1.countExecuted.get()).isEqualTo(1);
+		assertThat(job2.countExecuted.get()).isEqualTo(1);
+		assertThat(job3.countExecuted.get()).isEqualTo(1);
+
+		assertThat(
+			stats.getThreadPoolStats().getActiveThreads()
+			+ stats.getThreadPoolStats().getIdleThreads()
+		)
+		.isEqualTo(1);
 	}
 
 	private static class SingleJob implements Runnable {
-		boolean executed = false;
+		AtomicInteger countExecuted = new AtomicInteger(0);
 
 		@Override
 		public void run() {
-			if(executed) {
-				throw new RuntimeException("Job has already been executed");
-			}
-			executed = true;
+			countExecuted.incrementAndGet();
 			synchronized (this) {
 				notifyAll();
 			}
@@ -88,7 +105,7 @@ public class SchedulerTest {
 	}
 
 	private static void waitOn(Object lockOn, Supplier<Boolean> condition, long maxWait) {
-		long currentTime = System.currentTimeMillis(); 
+		long currentTime = System.currentTimeMillis();
 		long waitUntil = currentTime + maxWait;
 		while(!condition.get() && waitUntil > currentTime) {
 			synchronized (lockOn) {
@@ -97,8 +114,8 @@ public class SchedulerTest {
 				} catch (InterruptedException e) {
 				}
 			}
-			currentTime = System.currentTimeMillis(); 
+			currentTime = System.currentTimeMillis();
 		}
 	}
-	
+
 }

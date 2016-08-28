@@ -11,7 +11,7 @@ public class FixedDurationSchedule implements Schedule {
 	}
 
 	@Override
-	public long nextExecutionInMillis(TimeProvider timeProvider) {
+	public long nextExecutionInMillis(int executionsCount, TimeProvider timeProvider) {
 		return timeProvider.currentTime() + intervalInMillis;
 	}
 

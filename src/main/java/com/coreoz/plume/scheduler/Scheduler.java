@@ -1,12 +1,18 @@
 package com.coreoz.plume.scheduler;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.coreoz.plume.scheduler.schedule.Schedule;
+import com.coreoz.plume.scheduler.stats.SchedulerStats;
 import com.coreoz.plume.scheduler.time.SystemTimeProvider;
 import com.coreoz.plume.scheduler.time.TimeProvider;
 
@@ -16,6 +22,7 @@ import com.coreoz.plume.scheduler.time.TimeProvider;
  */
 public class Scheduler {
 
+	// TODO optimize log statements
 	private static final Logger logger = LoggerFactory.getLogger(Scheduler.class);
 
 	public static final int DEFAULT_THREAD_POOL_SIZE = 10;
@@ -26,6 +33,7 @@ public class Scheduler {
 	private final TimeProvider timeProvider;
 	private final long minimumDelayInMillisToReplaceJob;
 
+	private volatile int threadAvailableCount;
 	private volatile boolean shuttingDown;
 
 	public Scheduler() {
@@ -47,21 +55,27 @@ public class Scheduler {
 		this.threadPool = new JobThreadPool(nbThreads);
 		this.timeProvider = timeProvider;
 
+		this.threadAvailableCount = nbThreads;
 		this.shuttingDown = false;
 	}
 
-	public Job schedule(String nullableName, Runnable runnable, Schedule when) {
+	public synchronized Job schedule(String nullableName, Runnable runnable, Schedule when) {
 		// TODO check not null
 
 		String name = nullableName == null ? runnable.toString() : nullableName;
 		// TODO check job non déjà importé
 
-		Job job = Job.of(JobStatus.DONE, 0, name, when, runnable);
+		Job job = Job.of(
+			new AtomicReference<>(JobStatus.DONE),
+			new AtomicLong(0L),
+			new AtomicInteger(0),
+			name,
+			when,
+			runnable
+		);
 
-		parkInPool(job);
+		parkInPool(job, false);
 		jobs.indexedByName().put(name, job);
-
-		checkNextJobToRun();
 
 		return job;
 	}
@@ -74,55 +88,78 @@ public class Scheduler {
 		return Optional.ofNullable(jobs.indexedByName().get(name));
 	}
 
+	/**
+	 * Wait until the current running jobs are executed
+	 * and cancel jobs that are planned to be executed
+	 */
 	public void gracefullyShutdown() {
 		synchronized (jobs.nextExecutionsOrder()) {
+			if(shuttingDown) {
+				return;
+			}
+
 			shuttingDown = true;
 
 			if(jobs.nextRunningJob() != null) {
 				tryCancelNextExecution();
 			}
-
-			threadPool.gracefullyShutdown();
 		}
+
+		// should be outside the synchronized block to avoid dead lock
+		threadPool.gracefullyShutdown();
+	}
+
+	public SchedulerStats stats() {
+		return SchedulerStats.of(threadPool.stats());
 	}
 
 	// package API
 
-	void checkNextJobToRun() {
+	void checkNextJobToRun(boolean shouldReuseCurrentThread) {
 		synchronized (jobs.nextExecutionsOrder()) {
-			if(jobs.nextExecutionsOrder().isEmpty() || shuttingDown) {
-				// done :)
+			logger.debug("begin nextExecutionsOrder : {}", jobs.nextExecutionsOrder().stream().map(Job::name).collect(Collectors.joining()));
+
+			if(shouldReuseCurrentThread) {
+				threadAvailableCount++;
+			}
+
+			if(jobs.nextExecutionsOrder().isEmpty()) {
+				logger.trace("No more job to execute");
+				return;
+			}
+			if(shuttingDown) {
+				logger.trace("Shutting down...");
 				return;
 			}
 
 			// if the next job to run will execute later than the next job in the queue
 			// then the next job scheduled will be replaced by the next job in the queue
-			Job nextJob = jobs.nextExecutionsOrder().first();
+			Job nextJob = jobs.nextExecutionsOrder().get(0);
 			if(jobs.nextRunningJob() != null
-				&& jobs.nextRunningJob().job().status() == JobStatus.READY
-				&& (
-						jobs.nextRunningJob().job().nextExecutionTimeInMillis()
-						+ minimumDelayInMillisToReplaceJob
-					)
-					> nextJob.nextExecutionTimeInMillis()
+				&& jobs.nextRunningJob().job().status().get() == JobStatus.READY
+				&& jobs.nextRunningJob().job().nextExecutionTimeInMillis().get()
+					> (nextJob.nextExecutionTimeInMillis().get() + minimumDelayInMillisToReplaceJob)
 			) {
 				tryCancelNextExecution();
 				// the next job will be executed right after
 				// the cancel job in returned to the pool
-				return;
+			} else if(jobs.nextRunningJob() == null
+				|| jobs.nextRunningJob().job().status().get() != JobStatus.READY) {
+				runNextJob(shouldReuseCurrentThread);
 			}
-
-			if(jobs.nextRunningJob() == null
-				|| jobs.nextRunningJob().job().status() != JobStatus.READY) {
-				runNextJob();
-			}
+			logger.debug("end nextExecutionsOrder : {}", jobs.nextExecutionsOrder().stream().map(Job::name).collect(Collectors.joining()));
 		}
 	}
 
-	void parkInPool(Job executed) {
-		logger.trace("park {} - running {}", executed, jobs.nextRunningJob());
+	void parkInPool(Job executed, boolean shouldReuseCurrentThread) {
+		logger.trace(
+			"parkInPool {} - running {}",
+			executed.name(),
+			jobs.nextRunningJob() == null ? "null" : jobs.nextRunningJob().job().name()
+		);
 
 		if(shuttingDown) {
+			logger.trace("Shutting down...");
 			return;
 		}
 
@@ -131,12 +168,17 @@ public class Scheduler {
 		}
 
 		updateForNextExecution(executed);
-		if(executed.status() == JobStatus.SCHEDULED) {
+		if(executed.status().get() == JobStatus.SCHEDULED) {
 			synchronized (jobs.nextExecutionsOrder()) {
 				jobs.nextExecutionsOrder().add(executed);
+				jobs.nextExecutionsOrder().sort(Comparator.comparing(
+					job -> job.nextExecutionTimeInMillis().get()
+				));
 			}
-			checkNextJobToRun();
+		} else {
+			logger.info("The job {} won't be executed again", executed.name());
 		}
+		checkNextJobToRun(shouldReuseCurrentThread);
 	}
 
 	// internal
@@ -148,30 +190,44 @@ public class Scheduler {
 		}
 	}
 
-	private void runNextJob() {
-		if(threadPool.isAvailable()) {
-			jobs.nextRunningJob(new RunningJob(
-				jobs.nextExecutionsOrder().pollFirst(),
-				this,
-				timeProvider
-			));
-			threadPool.submitJob(jobs.nextRunningJob());
+	private void runNextJob(boolean shouldReuseCurrentThread) {
+		if(shouldReuseCurrentThread) {
+			// a previous job has already been executed on the current thread,
+			// and the current thread is ready to execute another job.
+			// so instead of returning the thread to the pool,
+			// it is directly used to run the next job in the queue.
+			nextRunningJob().run();
+		}
+		else if(threadAvailableCount > 0) {
+			threadPool.submitJob(nextRunningJob());
+			threadAvailableCount--;
 		} else {
 			logger.warn("Job thread pool is full, either tasks take too much time to execute "
 					+ "or either the thread pool is too small");
 		}
 	}
 
+	private RunningJob nextRunningJob() {
+		jobs.nextRunningJob(new RunningJob(
+			jobs.nextExecutionsOrder().remove(0),
+			this,
+			timeProvider
+		));
+		return jobs.nextRunningJob();
+	}
+
 	private Job updateForNextExecution(Job job) {
-		// if the job has not been executed, do not recalcule the next execution time
-		if(job.nextExecutionTimeInMillis() < timeProvider.currentTime()) {
-			job.nextExecutionTimeInMillis(job.schedule().nextExecutionInMillis(timeProvider));
+		// if the job has not been executed, do not recalculate the next execution time
+		if(job.status().get() != JobStatus.READY) {
+			job.nextExecutionTimeInMillis().set(
+				job.schedule().nextExecutionInMillis(job.executionsCount().get(), timeProvider)
+			);
 		}
 
-		if(job.nextExecutionTimeInMillis() > 0) {
-			job.status(JobStatus.SCHEDULED);
+		if(job.nextExecutionTimeInMillis().get() > 0) {
+			job.status().set(JobStatus.SCHEDULED);
 		} else {
-			job.status(JobStatus.DONE);
+			job.status().set(JobStatus.DONE);
 		}
 
 		return job;

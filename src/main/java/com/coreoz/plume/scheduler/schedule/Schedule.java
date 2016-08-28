@@ -4,6 +4,8 @@ import com.coreoz.plume.scheduler.time.TimeProvider;
 
 public interface Schedule {
 
-	long nextExecutionInMillis(TimeProvider timeProvider);
+	static final long WILL_NOT_BE_EXECUTED_AGAIN = -1L;
+
+	long nextExecutionInMillis(int executionsCount, TimeProvider timeProvider);
 
 }

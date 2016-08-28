@@ -32,12 +32,13 @@ public class RunningJob implements Runnable {
 	@Override
 	public void run() {
 		try {
-			job.status(JobStatus.READY);
+			job.status().set(JobStatus.READY);
 			if(waitAndNotifySchedulerBeforeExecution()) {
 				long startExecutionTime = timeProvider.currentTime();
 				logger.trace("Starting job {} execution...", job.name());
 
 				job.runnable().run();
+				job.executionsCount().incrementAndGet();
 
 				if(logger.isDebugEnabled()) {
 					logger.debug(
@@ -45,18 +46,20 @@ public class RunningJob implements Runnable {
 						timeProvider.currentTime() - startExecutionTime
 					);
 				}
+			} else {
+				logger.trace("Cancelling job {} execution", job.name());
 			}
 		} catch (Throwable t) {
 			logger.error("Error during job {} execution", job.name(), t);
 		} finally {
-			scheduler.parkInPool(job);
+			scheduler.parkInPool(job, true);
 		}
 	}
 
 	private boolean waitAndNotifySchedulerBeforeExecution() {
 		if(waitUntilExecution()) {
-			job.status(JobStatus.RUNNING);
-			scheduler.checkNextJobToRun();
+			job.status().set(JobStatus.RUNNING);
+			scheduler.checkNextJobToRun(false);
 			return true;
 		}
 		return false;
@@ -76,6 +79,8 @@ public class RunningJob implements Runnable {
 					job.wait(timeBeforeNextExecution);
 				}
 			}
+			// TODO check that it is really time to launch the job
+			// => currently the job can be launched before its scheduled execution time
 		} while (timeBeforeNextExecution > 0 && shouldExecuteJob);
 
 		if(timeBeforeNextExecution < 0) {
@@ -86,7 +91,7 @@ public class RunningJob implements Runnable {
 	}
 
 	private long timeBeforeNextExecution() {
-		return job.nextExecutionTimeInMillis() - timeProvider.currentTime();
+		return job.nextExecutionTimeInMillis().get() - timeProvider.currentTime();
 	}
 
 	@Override

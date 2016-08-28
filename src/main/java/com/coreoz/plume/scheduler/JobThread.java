@@ -1,6 +1,5 @@
 package com.coreoz.plume.scheduler;
 
-import java.lang.Thread.State;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -17,19 +16,15 @@ class JobThread {
 
 	JobThread() {
 		this.threadLoop = new ThreadLoop();
-		this.thread = null;
+		this.thread = new Thread(threadLoop, "Job Scheduler #" + threadCounter.getAndIncrement());
+		this.thread.start();
 	}
 
 	void offerJob(Runnable job) {
 		threadLoop.job = job;
 
-		if(thread == null || thread.getState() == State.TERMINATED) {
-			thread = new Thread(threadLoop, "Job Scheduler #" + threadCounter.getAndIncrement());
-			thread.start();
-		} else {
-			synchronized (threadLoop) {
-				threadLoop.notifyAll();
-			}
+		synchronized (threadLoop) {
+			threadLoop.notifyAll();
 		}
 	}
 
