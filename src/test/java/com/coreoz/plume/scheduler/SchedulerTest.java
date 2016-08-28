@@ -2,6 +2,8 @@ package com.coreoz.plume.scheduler;
 
 import static org.fest.assertions.Assertions.assertThat;
 
+import java.util.function.Supplier;
+
 import org.junit.Test;
 
 import com.coreoz.plume.scheduler.schedule.BasicSchedules;
@@ -17,9 +19,9 @@ public class SchedulerTest {
 			singleJob,
 			BasicSchedules.executeOnce(BasicSchedules.fixedDurationSchedule(1))
 		);
-		synchronized (singleJob) {
-			singleJob.wait(50);
-		}
+		
+		waitOn(singleJob, () -> singleJob.executed, 50);
+		
 		scheduler.gracefullyShutdown();
 
 		assertThat(singleJob.executed).isTrue();
@@ -27,7 +29,7 @@ public class SchedulerTest {
 
 	@Test
 	public void should_run_each_job_once() throws InterruptedException {
-		Scheduler scheduler = new Scheduler(2);
+		Scheduler scheduler = new Scheduler(1);
 		SingleJob job1 = new SingleJob();
 		SingleJob job2 = new SingleJob();
 		SingleJob job3 = new SingleJob();
@@ -47,30 +49,15 @@ public class SchedulerTest {
 			BasicSchedules.executeOnce(BasicSchedules.fixedDurationSchedule(1))
 		);
 		Thread thread1 = new Thread(() -> {
-			synchronized (job1) {
-				try {
-					job1.wait(50);
-				} catch (InterruptedException e) {
-				}
-			}
+			waitOn(job1, () -> job1.executed, 50);
 		});
 		thread1.start();
 		Thread thread2 = new Thread(() -> {
-			synchronized (job2) {
-				try {
-					job2.wait(50);
-				} catch (InterruptedException e) {
-				}
-			}
+			waitOn(job2, () -> job2.executed, 50);
 		});
 		thread2.start();
 		Thread thread3 = new Thread(() -> {
-			synchronized (job3) {
-				try {
-					job3.wait(50);
-				} catch (InterruptedException e) {
-				}
-			}
+			waitOn(job3, () -> job3.executed, 50);
 		});
 		thread3.start();
 
@@ -100,4 +87,18 @@ public class SchedulerTest {
 		}
 	}
 
+	private static void waitOn(Object lockOn, Supplier<Boolean> condition, long maxWait) {
+		long currentTime = System.currentTimeMillis(); 
+		long waitUntil = currentTime + maxWait;
+		while(!condition.get() && waitUntil > currentTime) {
+			synchronized (lockOn) {
+				try {
+					lockOn.wait(5);
+				} catch (InterruptedException e) {
+				}
+			}
+			currentTime = System.currentTimeMillis(); 
+		}
+	}
+	
 }
