@@ -20,7 +20,7 @@ import com.coreoz.plume.scheduler.time.TimeProvider;
  * A job is executed only once at a time.
  * The scheduler will never execute the same job twice at a time.
  */
-public class Scheduler {
+public final class Scheduler {
 
 	private static final Logger logger = LoggerFactory.getLogger(Scheduler.class);
 

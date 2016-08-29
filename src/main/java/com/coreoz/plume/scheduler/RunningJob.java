@@ -13,7 +13,7 @@ import lombok.experimental.Accessors;
 @Setter
 @Getter
 @Accessors(fluent = true)
-public class RunningJob implements Runnable {
+class RunningJob implements Runnable {
 
 	private static final Logger logger = LoggerFactory.getLogger(RunningJob.class);
 
@@ -21,9 +21,9 @@ public class RunningJob implements Runnable {
 	private final Scheduler scheduler;
 	private final TimeProvider timeProvider;
 
-	private boolean shouldExecuteJob = true;
+	private volatile boolean shouldExecuteJob = true;
 
-	public RunningJob(Job job, Scheduler scheduler, TimeProvider timeProvider) {
+	RunningJob(Job job, Scheduler scheduler, TimeProvider timeProvider) {
 		this.job = job;
 		this.scheduler = scheduler;
 		this.timeProvider = timeProvider;

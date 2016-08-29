@@ -16,7 +16,7 @@ class Jobs {
 	private final Map<String, Job> indexedByName;
 	private final ArrayList<Job> nextExecutionsOrder;
 
-	private RunningJob nextRunningJob;
+	private volatile RunningJob nextRunningJob;
 
 	Jobs() {
 		nextRunningJob = null;
