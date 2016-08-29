@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import com.coreoz.plume.scheduler.stats.ThreadPoolStats;
@@ -17,7 +18,7 @@ class JobThreadPool {
 	private final Set<JobThread> running;
 
 	// TODO explain this
-	private final LinkedBlockingQueue<RunningJob> toRunAsap;
+	private final BlockingQueue<RunningJob> toRunAsap;
 
 	JobThreadPool(int maxSize) {
 		this.lock = new Object();

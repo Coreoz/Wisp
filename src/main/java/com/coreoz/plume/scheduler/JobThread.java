@@ -1,5 +1,7 @@
 package com.coreoz.plume.scheduler;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -12,57 +14,45 @@ class JobThread {
 	private static final AtomicInteger threadCounter = new AtomicInteger(1);
 
 	private final ThreadLoop threadLoop;
+	private final BlockingQueue<Runnable> toRun;
 	private Thread thread;
 
 	JobThread() {
-		this.threadLoop = new ThreadLoop();
+		this.toRun = new LinkedBlockingQueue<>();
+		this.threadLoop = new ThreadLoop(toRun);
 		this.thread = new Thread(threadLoop, "Job Scheduler #" + threadCounter.getAndIncrement());
 		this.thread.start();
 	}
 
 	void offerJob(Runnable job) {
-		threadLoop.job = job;
-
-		synchronized (threadLoop) {
-			threadLoop.notifyAll();
-		}
+		toRun.offer(job);
 	}
 
 	void gracefullyShutdown() {
 		threadLoop.shuttingDown = true;
-		synchronized (threadLoop) {
-			threadLoop.notifyAll();
-		}
-		try {
-			thread.join();
-		} catch (InterruptedException e) {
-			logger.trace("", e);
-		}
+		toRun.offer(() -> {});
 	}
 
 	private static class ThreadLoop implements Runnable {
-		Runnable job = null;
-		boolean shuttingDown = false;
+		private final BlockingQueue<Runnable> toRun;
+
+		volatile boolean shuttingDown;
+
+		public ThreadLoop(BlockingQueue<Runnable> toRun) {
+			this.toRun = toRun;
+			this.shuttingDown = false;
+		}
 
 		@Override
 		public void run() {
 			while(!shuttingDown) {
 				try {
-					if(job == null) {
-						synchronized (this) {
-							wait();
-						}
-					}
-					if(job != null) {
-						job.run();
-						job = null;
-					}
+					toRun.take().run();
 				} catch (InterruptedException e) {
 					logger.error("", e);
 				}
 			}
 		}
-
 	}
 
 }
