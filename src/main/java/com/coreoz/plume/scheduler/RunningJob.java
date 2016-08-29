@@ -31,29 +31,28 @@ public class RunningJob implements Runnable {
 
 	@Override
 	public void run() {
-		try {
-			job.status().set(JobStatus.READY);
-			if(waitAndNotifySchedulerBeforeExecution()) {
-				long startExecutionTime = timeProvider.currentTime();
-				logger.debug("Starting job {} execution...", job.name());
+		job.status().set(JobStatus.READY);
+		if(waitAndNotifySchedulerBeforeExecution()) {
+			long startExecutionTime = timeProvider.currentTime();
+			logger.debug("Starting job {} execution...", job.name());
 
+			try {
 				job.runnable().run();
-				job.executionsCount().incrementAndGet();
-
-				if(logger.isDebugEnabled()) {
-					logger.debug(
-						"Job {} executed in {}ms", job.name(),
-						timeProvider.currentTime() - startExecutionTime
-					);
-				}
-			} else {
-				logger.trace("Cancelling job {} execution", job.name());
+			} catch(Throwable t) {
+				logger.error("Error during job {} execution", job.name(), t);
 			}
-		} catch (Throwable t) {
-			logger.error("Error during job {} execution", job.name(), t);
-		} finally {
-			scheduler.parkInPool(job, true);
+			job.executionsCount().incrementAndGet();
+
+			if(logger.isDebugEnabled()) {
+				logger.debug(
+					"Job {} executed in {}ms", job.name(),
+					timeProvider.currentTime() - startExecutionTime
+				);
+			}
+		} else {
+			logger.trace("Cancelling job {} execution", job.name());
 		}
+		scheduler.parkInPool(job, true);
 	}
 
 	private boolean waitAndNotifySchedulerBeforeExecution() {
