@@ -163,8 +163,10 @@ public class Scheduler {
 			return;
 		}
 
-		if(jobs.nextRunningJob() != null && jobs.nextRunningJob().job() == executed) {
-			jobs.nextRunningJob(null);
+		synchronized (jobs.nextExecutionsOrder()) {
+			if(jobs.nextRunningJob() != null && jobs.nextRunningJob().job() == executed) {
+				jobs.nextRunningJob(null);
+			}
 		}
 
 		updateForNextExecution(executed);
