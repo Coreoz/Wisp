@@ -22,7 +22,6 @@ import com.coreoz.plume.scheduler.time.TimeProvider;
  */
 public class Scheduler {
 
-	// TODO optimize log statements
 	private static final Logger logger = LoggerFactory.getLogger(Scheduler.class);
 
 	public static final int DEFAULT_THREAD_POOL_SIZE = 10;
@@ -74,6 +73,7 @@ public class Scheduler {
 			runnable
 		);
 
+		logger.debug("Scheduling job {}", job.name());
 		parkInPool(job, false);
 		jobs.indexedByName().put(name, job);
 
@@ -117,18 +117,20 @@ public class Scheduler {
 
 	void checkNextJobToRun(boolean shouldReuseCurrentThread) {
 		synchronized (jobs.nextExecutionsOrder()) {
-			logger.debug("begin nextExecutionsOrder : {}", jobs.nextExecutionsOrder().stream().map(Job::name).collect(Collectors.joining()));
+			if(logger.isTraceEnabled()) {
+				logger.trace("begin nextExecutionsOrder : {}", jobs.nextExecutionsOrder().stream().map(Job::name).collect(Collectors.joining()));
+			}
 
 			if(shouldReuseCurrentThread) {
 				threadAvailableCount++;
 			}
 
 			if(jobs.nextExecutionsOrder().isEmpty()) {
-				logger.trace("No more job to execute");
+				logger.debug("No more job to execute");
 				return;
 			}
 			if(shuttingDown) {
-				logger.trace("Shutting down...");
+				logger.debug("Shutting down...");
 				return;
 			}
 
@@ -147,19 +149,23 @@ public class Scheduler {
 				|| jobs.nextRunningJob().job().status().get() != JobStatus.READY) {
 				runNextJob(shouldReuseCurrentThread);
 			}
-			logger.debug("end nextExecutionsOrder : {}", jobs.nextExecutionsOrder().stream().map(Job::name).collect(Collectors.joining()));
+			if(logger.isTraceEnabled()) {
+				logger.trace("end nextExecutionsOrder : {}", jobs.nextExecutionsOrder().stream().map(Job::name).collect(Collectors.joining()));
+			}
 		}
 	}
 
 	void parkInPool(Job executed, boolean shouldReuseCurrentThread) {
-		logger.trace(
-			"parkInPool {} - running {}",
-			executed.name(),
-			jobs.nextRunningJob() == null ? "null" : jobs.nextRunningJob().job().name()
-		);
+		if(logger.isTraceEnabled()) {
+			logger.trace(
+				"parkInPool {} - running {}",
+				executed.name(),
+				jobs.nextRunningJob() == null ? "null" : jobs.nextRunningJob().job().name()
+			);
+		}
 
 		if(shuttingDown) {
-			logger.trace("Shutting down...");
+			logger.debug("Shutting down...");
 			return;
 		}
 
@@ -178,7 +184,7 @@ public class Scheduler {
 				));
 			}
 		} else {
-			logger.info("The job {} won't be executed again", executed.name());
+			logger.info("Job {} won't be executed again", executed.name());
 		}
 		checkNextJobToRun(shouldReuseCurrentThread);
 	}
