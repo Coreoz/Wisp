@@ -33,14 +33,14 @@ public class SchedulerTest {
 
 	@Test
 	@SneakyThrows
-	public void check_all_ok() {
-		for(int i = 1; i <= 1000; i++) {
+	public void check_racing_conditions() {
+		for(int i = 1; i <= 10000; i++) {
 			should_run_each_job_once();
-			System.out.println("iteration " + i + " done");
+			// System.out.println("iteration " + i + " done");
 		}
 	}
 
-//	@Test
+	@Test
 	public void should_run_each_job_once() throws InterruptedException {
 		Scheduler scheduler = new Scheduler(1);
 		SingleJob job1 = new SingleJob();
