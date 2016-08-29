@@ -20,7 +20,7 @@ class JobThread {
 	JobThread() {
 		this.toRun = new LinkedBlockingQueue<>();
 		this.threadLoop = new ThreadLoop(toRun);
-		this.thread = new Thread(threadLoop, "Job Scheduler #" + threadCounter.getAndIncrement());
+		this.thread = new Thread(threadLoop, "Plume Scheduler Worker #" + threadCounter.getAndIncrement());
 		this.thread.start();
 	}
 

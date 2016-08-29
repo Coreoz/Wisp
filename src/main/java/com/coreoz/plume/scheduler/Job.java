@@ -23,6 +23,7 @@ public class Job {
 	private AtomicReference<JobStatus> status;
 	private AtomicLong nextExecutionTimeInMillis;
 	private AtomicInteger executionsCount;
+	private Long lastExecutionTimeInMillis;
 	private final String name;
 	private final Schedule schedule;
 	private final Runnable runnable;

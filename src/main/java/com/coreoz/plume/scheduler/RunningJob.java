@@ -42,6 +42,7 @@ class RunningJob implements Runnable {
 				logger.error("Error during job {} execution", job.name(), t);
 			}
 			job.executionsCount().incrementAndGet();
+			job.lastExecutionTimeInMillis(timeProvider.currentTime());
 
 			if(logger.isDebugEnabled()) {
 				logger.debug(

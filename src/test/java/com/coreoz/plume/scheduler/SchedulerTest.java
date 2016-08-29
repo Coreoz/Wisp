@@ -6,6 +6,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.coreoz.plume.scheduler.schedule.BasicSchedules;
 import com.coreoz.plume.scheduler.stats.SchedulerStats;
@@ -13,6 +15,8 @@ import com.coreoz.plume.scheduler.stats.SchedulerStats;
 import lombok.SneakyThrows;
 
 public class SchedulerTest {
+
+	private static final Logger logger = LoggerFactory.getLogger(SchedulerTest.class);
 
 	@Test
 	public void should_run_a_single_job() throws InterruptedException {
@@ -36,7 +40,7 @@ public class SchedulerTest {
 	public void check_racing_conditions() {
 		for(int i = 1; i <= 10000; i++) {
 			should_run_each_job_once();
-			// System.out.println("iteration " + i + " done");
+			logger.info("iteration {} done", i);
 		}
 	}
 

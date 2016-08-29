@@ -6,7 +6,7 @@
     </encoder>
   </appender>
   
-  <logger name="com.coreoz.plume.scheduler" level="INFO"/>
+  <logger name="com.coreoz.plume.scheduler" level="TRACE"/>
   
   <root level="INFO">
     <appender-ref ref="STDOUT" />

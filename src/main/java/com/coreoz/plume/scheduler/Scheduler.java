@@ -68,6 +68,7 @@ public final class Scheduler {
 			new AtomicReference<>(JobStatus.DONE),
 			new AtomicLong(0L),
 			new AtomicInteger(0),
+			null,
 			name,
 			when,
 			runnable
@@ -115,13 +116,13 @@ public final class Scheduler {
 
 	// package API
 
-	void checkNextJobToRun(boolean shouldReuseCurrentThread) {
+	void checkNextJobToRun(boolean isEndingJob) {
 		synchronized (jobs.nextExecutionsOrder()) {
 			if(logger.isTraceEnabled()) {
 				logger.trace("begin nextExecutionsOrder : {}", jobs.nextExecutionsOrder().stream().map(Job::name).collect(Collectors.joining()));
 			}
 
-			if(shouldReuseCurrentThread) {
+			if(isEndingJob) {
 				threadAvailableCount++;
 			}
 
@@ -147,7 +148,7 @@ public final class Scheduler {
 				// the cancel job in returned to the pool
 			} else if(jobs.nextRunningJob() == null
 				|| jobs.nextRunningJob().job().status().get() != JobStatus.READY) {
-				runNextJob(shouldReuseCurrentThread);
+				runNextJob();
 			}
 			if(logger.isTraceEnabled()) {
 				logger.trace("end nextExecutionsOrder : {}", jobs.nextExecutionsOrder().stream().map(Job::name).collect(Collectors.joining()));
@@ -155,7 +156,7 @@ public final class Scheduler {
 		}
 	}
 
-	void parkInPool(Job executed, boolean shouldReuseCurrentThread) {
+	void parkInPool(Job executed, boolean isEndingJob) {
 		if(logger.isTraceEnabled()) {
 			logger.trace(
 				"parkInPool {} - running {}",
@@ -186,7 +187,7 @@ public final class Scheduler {
 		} else {
 			logger.info("Job {} won't be executed again", executed.name());
 		}
-		checkNextJobToRun(shouldReuseCurrentThread);
+		checkNextJobToRun(isEndingJob);
 	}
 
 	// internal
@@ -198,15 +199,8 @@ public final class Scheduler {
 		}
 	}
 
-	private void runNextJob(boolean shouldReuseCurrentThread) {
-		if(shouldReuseCurrentThread) {
-			// a previous job has already been executed on the current thread,
-			// and the current thread is ready to execute another job.
-			// so instead of returning the thread to the pool,
-			// it is directly used to run the next job in the queue.
-			nextRunningJob().run();
-		}
-		else if(threadAvailableCount > 0) {
+	private void runNextJob() {
+		if(threadAvailableCount > 0) {
 			threadPool.submitJob(nextRunningJob());
 			threadAvailableCount--;
 		} else {
