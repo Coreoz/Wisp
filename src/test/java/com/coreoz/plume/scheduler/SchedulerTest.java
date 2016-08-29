@@ -28,7 +28,7 @@ public class SchedulerTest {
 			BasicSchedules.executeOnce(BasicSchedules.fixedDurationSchedule(1))
 		);
 
-		waitOn(singleJob, () -> singleJob.countExecuted.get() > 0, 1000);
+		waitOn(singleJob, () -> singleJob.countExecuted.get() > 0, 10000);
 
 		scheduler.gracefullyShutdown();
 
@@ -66,15 +66,15 @@ public class SchedulerTest {
 			BasicSchedules.executeOnce(BasicSchedules.fixedDurationSchedule(1))
 		);
 		Thread thread1 = new Thread(() -> {
-			waitOn(job1, () -> job1.countExecuted.get() > 0, 1000);
+			waitOn(job1, () -> job1.countExecuted.get() > 0, 10000);
 		});
 		thread1.start();
 		Thread thread2 = new Thread(() -> {
-			waitOn(job2, () -> job2.countExecuted.get() > 0, 1000);
+			waitOn(job2, () -> job2.countExecuted.get() > 0, 10000);
 		});
 		thread2.start();
 		Thread thread3 = new Thread(() -> {
-			waitOn(job3, () -> job3.countExecuted.get() > 0, 1000);
+			waitOn(job3, () -> job3.countExecuted.get() > 0, 10000);
 		});
 		thread3.start();
 
