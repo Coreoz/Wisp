@@ -15,7 +15,7 @@ class JobThread {
 
 	private final ThreadLoop threadLoop;
 	private final BlockingQueue<Runnable> toRun;
-	private Thread thread;
+	private final Thread thread;
 
 	JobThread() {
 		this.toRun = new LinkedBlockingQueue<>();
