@@ -99,6 +99,8 @@ public final class Scheduler {
 				return;
 			}
 
+			logger.info("Shutting down...");
+
 			shuttingDown = true;
 
 			if(jobs.nextRunningJob() != null) {
@@ -131,7 +133,7 @@ public final class Scheduler {
 				return;
 			}
 			if(shuttingDown) {
-				logger.debug("Shutting down...");
+				logger.trace("Scheduler is shutting down, stop looking for next job to run");
 				return;
 			}
 
@@ -161,12 +163,15 @@ public final class Scheduler {
 			logger.trace(
 				"parkInPool {} - running {}",
 				executed.name(),
-				jobs.nextRunningJob() == null ? "null" : jobs.nextRunningJob().job().name()
+				Optional
+					.ofNullable(jobs.nextRunningJob())
+					.map(runningJob -> runningJob.job().name())
+					.orElse(null)
 			);
 		}
 
 		if(shuttingDown) {
-			logger.debug("Shutting down...");
+			logger.trace("Scheduler is shutting down, do not look for next job to run");
 			return;
 		}
 
