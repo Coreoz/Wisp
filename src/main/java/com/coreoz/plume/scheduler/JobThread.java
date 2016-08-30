@@ -30,6 +30,7 @@ class JobThread {
 
 	void gracefullyShutdown() {
 		threadLoop.shuttingDown = true;
+		// enable to release the lock and check for the shuttingDown value
 		toRun.offer(() -> {});
 	}
 
@@ -49,7 +50,7 @@ class JobThread {
 				try {
 					toRun.take().run();
 				} catch (InterruptedException e) {
-					logger.error("", e);
+					logger.error("The worker thread should not be interrupted", e);
 				}
 			}
 		}
