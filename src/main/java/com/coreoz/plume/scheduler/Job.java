@@ -1,9 +1,6 @@
 package com.coreoz.plume.scheduler;
 
 import java.time.Instant;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.coreoz.plume.scheduler.schedule.Schedule;
 
@@ -20,9 +17,9 @@ import lombok.experimental.Accessors;
 public class Job {
 
 	// TODO check if everything really needs to be volatile
-	private AtomicReference<JobStatus> status;
-	private AtomicLong nextExecutionTimeInMillis;
-	private AtomicInteger executionsCount;
+	private volatile JobStatus status;
+	private volatile Long nextExecutionTimeInMillis;
+	private volatile Integer executionsCount;
 	private Long lastExecutionTimeInMillis;
 	private final String name;
 	private final Schedule schedule;
@@ -35,7 +32,7 @@ public class Job {
 	@Override
 	public String toString() {
 		return "Job " + name + " [" + status + "] - " + schedule
-				+ " - next execution at " + Instant.ofEpochMilli(nextExecutionTimeInMillis.get()) +"ms";
+				+ " - next execution at " + Instant.ofEpochMilli(nextExecutionTimeInMillis) +"ms";
 	}
 
 }

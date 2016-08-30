@@ -3,9 +3,6 @@ package com.coreoz.plume.scheduler;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -77,9 +74,9 @@ public final class Scheduler {
 		}
 
 		Job job = Job.of(
-			new AtomicReference<>(JobStatus.DONE),
-			new AtomicLong(0L),
-			new AtomicInteger(0),
+			JobStatus.DONE,
+			0L,
+			0,
 			null,
 			name,
 			when,
@@ -153,15 +150,15 @@ public final class Scheduler {
 			// then the next job scheduled will be replaced by the next job in the queue
 			Job nextJob = jobs.nextExecutionsOrder().get(0);
 			if(jobs.nextRunningJob() != null
-				&& jobs.nextRunningJob().job().status().get() == JobStatus.READY
-				&& jobs.nextRunningJob().job().nextExecutionTimeInMillis().get()
-					> (nextJob.nextExecutionTimeInMillis().get() + minimumDelayInMillisToReplaceJob)
+				&& jobs.nextRunningJob().job().status() == JobStatus.READY
+				&& jobs.nextRunningJob().job().nextExecutionTimeInMillis()
+					> (nextJob.nextExecutionTimeInMillis() + minimumDelayInMillisToReplaceJob)
 			) {
 				tryCancelNextExecution();
 				// the next job will be executed right after
 				// the cancel job in returned to the pool
 			} else if(jobs.nextRunningJob() == null
-				|| jobs.nextRunningJob().job().status().get() != JobStatus.READY) {
+				|| jobs.nextRunningJob().job().status() != JobStatus.READY) {
 				runNextJob();
 			}
 			if(logger.isTraceEnabled()) {
@@ -194,11 +191,11 @@ public final class Scheduler {
 		}
 
 		updateForNextExecution(executed);
-		if(executed.status().get() == JobStatus.SCHEDULED) {
+		if(executed.status() == JobStatus.SCHEDULED) {
 			synchronized (jobs.nextExecutionsOrder()) {
 				jobs.nextExecutionsOrder().add(executed);
 				jobs.nextExecutionsOrder().sort(Comparator.comparing(
-					job -> job.nextExecutionTimeInMillis().get()
+					Job::nextExecutionTimeInMillis
 				));
 			}
 		} else {
@@ -237,16 +234,16 @@ public final class Scheduler {
 
 	private Job updateForNextExecution(Job job) {
 		// if the job has not been executed, do not recalculate the next execution time
-		if(job.status().get() != JobStatus.READY) {
-			job.nextExecutionTimeInMillis().set(
-				job.schedule().nextExecutionInMillis(job.executionsCount().get(), timeProvider)
+		if(job.status() != JobStatus.READY) {
+			job.nextExecutionTimeInMillis(
+				job.schedule().nextExecutionInMillis(job.executionsCount(), timeProvider)
 			);
 		}
 
-		if(job.nextExecutionTimeInMillis().get() > 0) {
-			job.status().set(JobStatus.SCHEDULED);
+		if(job.nextExecutionTimeInMillis() > 0L) {
+			job.status(JobStatus.SCHEDULED);
 		} else {
-			job.status().set(JobStatus.DONE);
+			job.status(JobStatus.DONE);
 		}
 
 		return job;
