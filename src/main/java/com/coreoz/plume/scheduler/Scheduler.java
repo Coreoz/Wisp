@@ -58,11 +58,23 @@ public final class Scheduler {
 		this.shuttingDown = false;
 	}
 
+	public Job schedule(Runnable runnable, Schedule when) {
+		return schedule(null, runnable, when);
+	}
+
 	public synchronized Job schedule(String nullableName, Runnable runnable, Schedule when) {
-		// TODO check not null
+		Preconditions.checkNotNull(runnable, "Runnable must not be null");
+		Preconditions.checkNotNull(when, "Schedule must not be null");
 
 		String name = nullableName == null ? runnable.toString() : nullableName;
-		// TODO check job non déjà importé
+
+		if(findJob(name).isPresent()) {
+			throw new IllegalArgumentException("A job is already scheduled with the name:" + name);
+		}
+
+		if(when.nextExecutionInMillis(0, timeProvider) < timeProvider.currentTime()) {
+			logger.warn("The job {} is scheduled at a paste date: it will never be executed", name);
+		}
 
 		Job job = Job.of(
 			new AtomicReference<>(JobStatus.DONE),
