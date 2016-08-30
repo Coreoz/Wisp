@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.coreoz.plume.scheduler.schedule.BasicSchedules;
 import com.coreoz.plume.scheduler.stats.SchedulerStats;
+import com.coreoz.plume.scheduler.time.SystemTimeProvider;
 
 import lombok.SneakyThrows;
 
@@ -40,6 +41,10 @@ public class SchedulerTest {
 	public void check_racing_conditions() {
 		for(int i = 1; i <= 10000; i++) {
 			should_run_each_job_once();
+			logger.info("iteration {} done", i);
+		}
+		for(int i = 1; i <= 100; i++) {
+			should_not_run_early_job();
 			logger.info("iteration {} done", i);
 		}
 	}
@@ -94,6 +99,28 @@ public class SchedulerTest {
 			+ stats.getThreadPoolStats().getIdleThreads()
 		)
 		.isEqualTo(1);
+	}
+
+	@Test
+	public void should_not_run_early_job() throws InterruptedException {
+		SystemTimeProvider timeProvider = new SystemTimeProvider();
+		Scheduler scheduler = new Scheduler(1, 10, timeProvider);
+		SingleJob job1 = new SingleJob();
+		long beforeExecutionTime = timeProvider.currentTime();
+		long jobIntervalTime = 40L;
+		Job job = scheduler.schedule(
+			"job1",
+			job1,
+			BasicSchedules.executeOnce(BasicSchedules.fixedDurationSchedule(jobIntervalTime))
+		);
+		Thread thread1 = new Thread(() -> {
+			waitOn(job1, () -> job1.countExecuted.get() > 0, 10000);
+		});
+		thread1.start();
+		thread1.join();
+
+		assertThat(job.lastExecutionTimeInMillis() - beforeExecutionTime)
+			.isGreaterThanOrEqualTo(jobIntervalTime);
 	}
 
 	private static class SingleJob implements Runnable {

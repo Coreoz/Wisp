@@ -75,12 +75,9 @@ class RunningJob implements Runnable {
 			timeBeforeNextExecution = timeBeforeNextExecution();
 			if(timeBeforeNextExecution > 0) {
 				synchronized (job) {
-					// TODO is it accurate for long duration ?
 					job.wait(timeBeforeNextExecution);
 				}
 			}
-			// TODO check that it is really time to launch the job
-			// => currently the job can be launched before its scheduled execution time
 		} while (timeBeforeNextExecution > 0 && shouldExecuteJob);
 
 		if(timeBeforeNextExecution < 0) {
