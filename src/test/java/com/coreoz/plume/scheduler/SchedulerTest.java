@@ -108,6 +108,7 @@ public class SchedulerTest {
 		SingleJob job1 = new SingleJob();
 		long beforeExecutionTime = timeProvider.currentTime();
 		long jobIntervalTime = 40L;
+
 		Job job = scheduler.schedule(
 			"job1",
 			job1,
@@ -118,6 +119,7 @@ public class SchedulerTest {
 		});
 		thread1.start();
 		thread1.join();
+		scheduler.gracefullyShutdown();
 
 		assertThat(job.lastExecutionTimeInMillis() - beforeExecutionTime)
 			.isGreaterThanOrEqualTo(jobIntervalTime);

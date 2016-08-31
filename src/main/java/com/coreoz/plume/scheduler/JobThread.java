@@ -32,6 +32,11 @@ class JobThread {
 		threadLoop.shuttingDown = true;
 		// enable to release the lock and check for the shuttingDown value
 		toRun.offer(() -> {});
+		try {
+			thread.join();
+		} catch (InterruptedException e) {
+			// at this point, there is nothing to do if the thread is interrupted
+		}
 	}
 
 	private static class ThreadLoop implements Runnable {
