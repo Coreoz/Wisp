@@ -2,6 +2,7 @@ package com.coreoz.plume.scheduler;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -60,8 +61,8 @@ public final class Scheduler {
 	}
 
 	public synchronized Job schedule(String nullableName, Runnable runnable, Schedule when) {
-		Preconditions.checkNotNull(runnable, "Runnable must not be null");
-		Preconditions.checkNotNull(when, "Schedule must not be null");
+		Objects.requireNonNull(runnable, "Runnable must not be null");
+		Objects.requireNonNull(when, "Schedule must not be null");
 
 		String name = nullableName == null ? runnable.toString() : nullableName;
 
