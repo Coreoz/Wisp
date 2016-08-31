@@ -17,7 +17,14 @@ class JobThreadPool {
 	private final List<JobThread> available;
 	private final Set<JobThread> running;
 
-	// TODO explain this
+	// When a job is done, the thread pool still have some instructions to run.
+	// That means there is a difference of perception between the scheduler
+	// and the thread pool: for the scheduler a new thread is available,
+	// whereas for the thread pool, the thread is still running.
+	// This queue is used when the thread pool is full and the scheduler
+	// think there is a slot available. The next job to run will be stacked
+	// in this queue. Then after the thread executing the last job has finished
+	// executing its last remaining instructions, it will execute the next job
 	private final BlockingQueue<RunningJob> toRunAsap;
 
 	JobThreadPool(int maxSize) {
