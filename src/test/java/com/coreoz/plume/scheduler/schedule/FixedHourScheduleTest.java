@@ -42,4 +42,6 @@ public class FixedHourScheduleTest {
 		assertThat(new FixedHourSchedule("00:00:01").nextExecutionInMillis(0, midDay)).isEqualTo(1000);
 	}
 
+	// TODO test time with jet lag
+
 }
