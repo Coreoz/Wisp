@@ -73,7 +73,7 @@ public final class Scheduler {
 			logger.warn("The job {} is scheduled at a paste date: it will never be executed", name);
 		}
 
-		Job job = Job.of(
+		Job job = new Job(
 			JobStatus.DONE,
 			0L,
 			0,

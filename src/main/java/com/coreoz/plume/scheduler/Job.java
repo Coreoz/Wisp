@@ -4,28 +4,78 @@ import java.time.Instant;
 
 import com.coreoz.plume.scheduler.schedule.Schedule;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
-
-// TODO remove all lombok annotation to control the public API
-@Setter
-@Getter
-@AllArgsConstructor(staticName = "of")
-@Accessors(fluent = true)
 public class Job {
 
-	// TODO check if everything really needs to be volatile
 	private volatile JobStatus status;
-	private volatile Long nextExecutionTimeInMillis;
-	private volatile Integer executionsCount;
+	private volatile long nextExecutionTimeInMillis;
+	private volatile int executionsCount;
 	private Long lastExecutionTimeInMillis;
 	private final String name;
 	private final Schedule schedule;
 	private final Runnable runnable;
 
+	// public API
+
+	public JobStatus status() {
+		return status;
+	}
+
+	public long nextExecutionTimeInMillis() {
+		return nextExecutionTimeInMillis;
+	}
+
+	public int executionsCount() {
+		return executionsCount;
+	}
+
+	public Long lastExecutionTimeInMillis() {
+		return lastExecutionTimeInMillis;
+	}
+
+	public String name() {
+		return name;
+	}
+
+	public Schedule schedule() {
+		return schedule;
+	}
+
+	public Runnable runnable() {
+		return runnable;
+	}
+
 	// package API
+
+	Job(JobStatus status, long nextExecutionTimeInMillis, int executionsCount,
+			Long lastExecutionTimeInMillis, String name, Schedule schedule, Runnable runnable) {
+		this.status = status;
+		this.nextExecutionTimeInMillis = nextExecutionTimeInMillis;
+		this.executionsCount = executionsCount;
+		this.lastExecutionTimeInMillis = lastExecutionTimeInMillis;
+		this.name = name;
+		this.schedule = schedule;
+		this.runnable = runnable;
+	}
+
+	Job status(JobStatus status) {
+		this.status = status;
+		return this;
+	}
+
+	Job nextExecutionTimeInMillis(long nextExecutionTimeInMillis) {
+		this.nextExecutionTimeInMillis = nextExecutionTimeInMillis;
+		return this;
+	}
+
+	Job executionsCount(int executionsCount) {
+		this.executionsCount = executionsCount;
+		return this;
+	}
+
+	Job lastExecutionTimeInMillis(Long lastExecutionTimeInMillis) {
+		this.lastExecutionTimeInMillis = lastExecutionTimeInMillis;
+		return this;
+	}
 
 	// toString
 
