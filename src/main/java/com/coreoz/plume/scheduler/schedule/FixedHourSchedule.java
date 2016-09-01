@@ -1,23 +1,18 @@
 package com.coreoz.plume.scheduler.schedule;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.OffsetDateTime;
-import java.time.OffsetTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
 import com.coreoz.plume.scheduler.time.TimeProvider;
 
 public class FixedHourSchedule implements Schedule {
 
-	static final ZoneOffset SYSTEM_OFFSET = LocalDateTime
-														.now()
-														.atZone(ZoneOffset.systemDefault())
-														.getOffset();
-
-	private final OffsetTime executionTime;
+	private final LocalTime executionTime;
+	private final ZoneId zoneId;
 
 	/**
 	 * Parse time in the form of "hh:mm" or "hh:mm:ss"
@@ -26,38 +21,50 @@ public class FixedHourSchedule implements Schedule {
 		this(LocalTime.parse(every));
 	}
 
+	/**
+	 * Parse time in the form of "hh:mm" or "hh:mm:ss"
+	 */
+	public FixedHourSchedule(String every, ZoneId zoneId) {
+		this(LocalTime.parse(every), zoneId);
+	}
+
 	public FixedHourSchedule(LocalTime every) {
-		this(every.atOffset(SYSTEM_OFFSET));
+		this(every, ZoneOffset.systemDefault());
 	}
 
-	public FixedHourSchedule(OffsetTime executionTime) {
-		this.executionTime = executionTime;
+	public FixedHourSchedule(LocalTime every, ZoneId zoneId) {
+		this.executionTime = every;
+		this.zoneId = zoneId;
 	}
 
-	public OffsetTime executionTime() {
+	public LocalTime executionTime() {
 		return executionTime;
+	}
+
+	public ZoneId zoneId() {
+		return zoneId;
 	}
 
 	@Override
 	public long nextExecutionInMillis(int executionsCount, TimeProvider timeProvider) {
-		OffsetDateTime currentDateTime = Instant
+		ZonedDateTime currentDateTime = Instant
 										.ofEpochMilli(timeProvider.currentTime())
-										.atOffset(SYSTEM_OFFSET);
+										.atZone(zoneId);
 
 		return currentDateTime
 				.until(nextExecutionDateTime(currentDateTime), ChronoUnit.MILLIS);
 	}
 
-	private OffsetDateTime nextExecutionDateTime(OffsetDateTime currentDateTime) {
-		if(currentDateTime.toOffsetTime().compareTo(executionTime) <= 0) {
-			return executionTime.atDate(currentDateTime.toLocalDate());
+	private ZonedDateTime nextExecutionDateTime(ZonedDateTime currentDateTime) {
+		if(currentDateTime.toLocalTime().compareTo(executionTime) <= 0) {
+			return executionTime.atDate(currentDateTime.toLocalDate()).atZone(zoneId);
 		}
-		return executionTime.atDate(currentDateTime.toLocalDate().plusDays(1));
+		return executionTime.atDate(currentDateTime.toLocalDate()).plusDays(1).atZone(zoneId);
 	}
 
 	@Override
 	public String toString() {
-		return "at " + executionTime;
+		return "at " + executionTime + " " + zoneId;
 	}
 
 }
