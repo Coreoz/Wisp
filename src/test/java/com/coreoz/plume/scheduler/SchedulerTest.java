@@ -9,7 +9,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.coreoz.plume.scheduler.schedule.BasicSchedules;
+import com.coreoz.plume.scheduler.schedule.Schedules;
 import com.coreoz.plume.scheduler.stats.SchedulerStats;
 import com.coreoz.plume.scheduler.time.SystemTimeProvider;
 
@@ -26,7 +26,7 @@ public class SchedulerTest {
 		scheduler.schedule(
 			"test",
 			singleJob,
-			BasicSchedules.executeOnce(BasicSchedules.fixedDurationSchedule(1))
+			Schedules.executeOnce(Schedules.fixedDurationSchedule(1))
 		);
 
 		waitOn(singleJob, () -> singleJob.countExecuted.get() > 0, 10000);
@@ -58,17 +58,17 @@ public class SchedulerTest {
 		scheduler.schedule(
 			"job1",
 			job1,
-			BasicSchedules.executeOnce(BasicSchedules.fixedDurationSchedule(1))
+			Schedules.executeOnce(Schedules.fixedDurationSchedule(1))
 		);
 		scheduler.schedule(
 			"job2",
 			job2,
-			BasicSchedules.executeOnce(BasicSchedules.fixedDurationSchedule(1))
+			Schedules.executeOnce(Schedules.fixedDurationSchedule(1))
 		);
 		scheduler.schedule(
 			"job3",
 			job3,
-			BasicSchedules.executeOnce(BasicSchedules.fixedDurationSchedule(1))
+			Schedules.executeOnce(Schedules.fixedDurationSchedule(1))
 		);
 		Thread thread1 = new Thread(() -> {
 			waitOn(job1, () -> job1.countExecuted.get() > 0, 10000);
@@ -112,7 +112,7 @@ public class SchedulerTest {
 		Job job = scheduler.schedule(
 			"job1",
 			job1,
-			BasicSchedules.executeOnce(BasicSchedules.fixedDurationSchedule(jobIntervalTime))
+			Schedules.executeOnce(Schedules.fixedDurationSchedule(jobIntervalTime))
 		);
 		Thread thread1 = new Thread(() -> {
 			waitOn(job1, () -> job1.countExecuted.get() > 0, 10000);
