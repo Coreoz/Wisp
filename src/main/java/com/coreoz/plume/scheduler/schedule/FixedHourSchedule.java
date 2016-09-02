@@ -7,8 +7,6 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
-import com.coreoz.plume.scheduler.time.TimeProvider;
-
 public class FixedHourSchedule implements Schedule {
 
 	private final LocalTime executionTime;
@@ -46,9 +44,9 @@ public class FixedHourSchedule implements Schedule {
 	}
 
 	@Override
-	public long nextExecutionInMillis(int executionsCount, TimeProvider timeProvider) {
+	public long nextExecutionInMillis(int executionsCount, long currentTimeInMillis) {
 		ZonedDateTime currentDateTime = Instant
-										.ofEpochMilli(timeProvider.currentTime())
+										.ofEpochMilli(currentTimeInMillis)
 										.atZone(zoneId);
 
 		return currentDateTime

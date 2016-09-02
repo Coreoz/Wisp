@@ -125,6 +125,26 @@ public class SchedulerTest {
 			.isGreaterThanOrEqualTo(jobIntervalTime);
 	}
 
+	@Test
+	public void should_not_execute_past_job() throws InterruptedException {
+		Scheduler scheduler = new Scheduler();
+		SingleJob job1 = new SingleJob();
+
+		scheduler.schedule(
+			"job1",
+			job1,
+			Schedules.fixedDurationSchedule(-1000)
+		);
+		Thread thread1 = new Thread(() -> {
+			waitOn(job1, () -> job1.countExecuted.get() > 0, 500);
+		});
+		thread1.start();
+		thread1.join();
+		scheduler.gracefullyShutdown();
+
+		assertThat(job1.countExecuted.get()).isEqualTo(0);
+	}
+
 	private static class SingleJob implements Runnable {
 		AtomicInteger countExecuted = new AtomicInteger(0);
 

@@ -1,7 +1,5 @@
 package com.coreoz.plume.scheduler.schedule;
 
-import com.coreoz.plume.scheduler.time.TimeProvider;
-
 public class FixedDurationSchedule implements Schedule {
 
 	private final long intervalInMillis;
@@ -11,8 +9,8 @@ public class FixedDurationSchedule implements Schedule {
 	}
 
 	@Override
-	public long nextExecutionInMillis(int executionsCount, TimeProvider timeProvider) {
-		return timeProvider.currentTime() + intervalInMillis;
+	public long nextExecutionInMillis(int executionsCount, long currentTimeInMillis) {
+		return currentTimeInMillis + intervalInMillis;
 	}
 
 	@Override

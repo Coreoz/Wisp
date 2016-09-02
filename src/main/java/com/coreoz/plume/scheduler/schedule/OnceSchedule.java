@@ -1,7 +1,5 @@
 package com.coreoz.plume.scheduler.schedule;
 
-import com.coreoz.plume.scheduler.time.TimeProvider;
-
 public class OnceSchedule implements Schedule {
 
 	private final Schedule baseSchedule;
@@ -11,11 +9,11 @@ public class OnceSchedule implements Schedule {
 	}
 
 	@Override
-	public long nextExecutionInMillis(int executionsCount, TimeProvider timeProvider) {
+	public long nextExecutionInMillis(int executionsCount, long currentTimeInMillis) {
 		if(executionsCount > 0) {
 			return WILL_NOT_BE_EXECUTED_AGAIN;
 		}
-		return baseSchedule.nextExecutionInMillis(executionsCount, timeProvider);
+		return baseSchedule.nextExecutionInMillis(executionsCount, currentTimeInMillis);
 	}
 
 	@Override

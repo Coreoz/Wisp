@@ -9,8 +9,6 @@ import java.time.ZonedDateTime;
 
 import org.junit.Test;
 
-import com.coreoz.plume.scheduler.time.TimeProvider;
-
 public class FixedHourScheduleTest {
 
 	@Test
@@ -38,7 +36,7 @@ public class FixedHourScheduleTest {
 			.of(2016, 8, 31)
 			.atStartOfDay()
 			.atZone(ectZone);
-		TimeProvider midDay = () -> augustMidnight.toEpochSecond() * 1000;
+		long midDay = augustMidnight.toEpochSecond() * 1000;
 
 		assertThat(new FixedHourSchedule("00:00:00").nextExecutionInMillis(0, midDay)).isEqualTo(0);
 		assertThat(new FixedHourSchedule("00:00:01").nextExecutionInMillis(0, midDay)).isEqualTo(1000);
@@ -51,7 +49,7 @@ public class FixedHourScheduleTest {
 			.of(2016, 8, 31)
 			.atTime(12, 0)
 			.atZone(ectZone);
-		TimeProvider midDay = () -> augustMidnight.toEpochSecond() * 1000;
+		long midDay = augustMidnight.toEpochSecond() * 1000;
 
 		assertThat(new FixedHourSchedule("12:00:00").nextExecutionInMillis(0, midDay)).isEqualTo(0);
 		assertThat(new FixedHourSchedule("12:00:01").nextExecutionInMillis(0, midDay)).isEqualTo(1000);
@@ -66,7 +64,7 @@ public class FixedHourScheduleTest {
 			.of(2016, 10, 30)
 			.atStartOfDay()
 			.atZone(ectZone);
-		TimeProvider midDay = () -> augustMidnight.toEpochSecond() * 1000;
+		long midDay = augustMidnight.toEpochSecond() * 1000;
 
 		assertThat(new FixedHourSchedule("02:00:00", ectZone).nextExecutionInMillis(0, midDay)).isEqualTo(2 * 60 * 60 * 1000);
 		assertThat(new FixedHourSchedule("03:00:00", ectZone).nextExecutionInMillis(0, midDay)).isEqualTo(4 * 60 * 60 * 1000);

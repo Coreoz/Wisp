@@ -70,7 +70,8 @@ public final class Scheduler {
 			throw new IllegalArgumentException("A job is already scheduled with the name:" + name);
 		}
 
-		if(when.nextExecutionInMillis(0, timeProvider) < timeProvider.currentTime()) {
+		long currentTimeInMillis = timeProvider.currentTime();
+		if(when.nextExecutionInMillis(0, currentTimeInMillis) < currentTimeInMillis) {
 			logger.warn("The job {} is scheduled at a paste date: it will never be executed", name);
 		}
 
@@ -234,14 +235,16 @@ public final class Scheduler {
 	}
 
 	private Job updateForNextExecution(Job job) {
+		long currentTimeInMillis = timeProvider.currentTime();
+
 		// if the job has not been executed, do not recalculate the next execution time
 		if(job.status() != JobStatus.READY) {
 			job.nextExecutionTimeInMillis(
-				job.schedule().nextExecutionInMillis(job.executionsCount(), timeProvider)
+				job.schedule().nextExecutionInMillis(job.executionsCount(), currentTimeInMillis)
 			);
 		}
 
-		if(job.nextExecutionTimeInMillis() > 0L) {
+		if(job.nextExecutionTimeInMillis() >= currentTimeInMillis) {
 			job.status(JobStatus.SCHEDULED);
 		} else {
 			job.status(JobStatus.DONE);
