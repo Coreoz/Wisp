@@ -72,7 +72,7 @@ public final class Scheduler {
 
 		long currentTimeInMillis = timeProvider.currentTime();
 		if(when.nextExecutionInMillis(0, currentTimeInMillis) < currentTimeInMillis) {
-			logger.warn("The job {} is scheduled at a paste date: it will never be executed", name);
+			logger.warn("The job '{}' is scheduled at a paste date: it will never be executed", name);
 		}
 
 		Job job = new Job(
@@ -85,7 +85,7 @@ public final class Scheduler {
 			runnable
 		);
 
-		logger.debug("Scheduling job {}", job.name());
+		logger.debug("Scheduling job '{}'", job.name());
 		parkInPool(job, false);
 		jobs.indexedByName().put(name, job);
 
@@ -201,7 +201,7 @@ public final class Scheduler {
 				));
 			}
 		} else {
-			logger.info("Job {} won't be executed again", executed.name());
+			logger.info("Job '{}' won't be executed anymore", executed.name());
 		}
 		checkNextJobToRun(isEndingJob);
 	}

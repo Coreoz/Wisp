@@ -45,12 +45,17 @@ public class FixedHourSchedule implements Schedule {
 
 	@Override
 	public long nextExecutionInMillis(int executionsCount, long currentTimeInMillis) {
+		return durationUntilNextExecutionInMillis(executionsCount, currentTimeInMillis)
+				+ currentTimeInMillis;
+	}
+
+	long durationUntilNextExecutionInMillis(int executionsCount, long currentTimeInMillis) {
 		ZonedDateTime currentDateTime = Instant
-										.ofEpochMilli(currentTimeInMillis)
-										.atZone(zoneId);
+				.ofEpochMilli(currentTimeInMillis)
+				.atZone(zoneId);
 
 		return currentDateTime
-				.until(nextExecutionDateTime(currentDateTime), ChronoUnit.MILLIS);
+			.until(nextExecutionDateTime(currentDateTime), ChronoUnit.MILLIS);
 	}
 
 	private ZonedDateTime nextExecutionDateTime(ZonedDateTime currentDateTime) {
