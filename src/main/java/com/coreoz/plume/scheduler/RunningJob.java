@@ -34,19 +34,19 @@ class RunningJob implements Runnable {
 		job.status(JobStatus.READY);
 		if(waitAndNotifySchedulerBeforeExecution()) {
 			long startExecutionTime = timeProvider.currentTime();
-			logger.debug("Starting job {} execution...", job.name());
+			logger.debug("Starting job '{}' execution...", job.name());
 
 			try {
 				job.runnable().run();
 			} catch(Throwable t) {
-				logger.error("Error during job {} execution", job.name(), t);
+				logger.error("Error during job '{}' execution", job.name(), t);
 			}
 			job.executionsCount(job.executionsCount() + 1);
 			job.lastExecutionTimeInMillis(timeProvider.currentTime());
 
 			if(logger.isDebugEnabled()) {
 				logger.debug(
-					"Job {} executed in {}ms", job.name(),
+					"Job '{}' executed in {}ms", job.name(),
 					timeProvider.currentTime() - startExecutionTime
 				);
 			}
@@ -81,7 +81,7 @@ class RunningJob implements Runnable {
 		} while (timeBeforeNextExecution > 0 && shouldExecuteJob);
 
 		if(timeBeforeNextExecution < 0) {
-			logger.debug("Job {} execution is {}ms late", job.name(), -timeBeforeNextExecution);
+			logger.debug("Job '{}' execution is {}ms late", job.name(), -timeBeforeNextExecution);
 		}
 
 		return shouldExecuteJob;

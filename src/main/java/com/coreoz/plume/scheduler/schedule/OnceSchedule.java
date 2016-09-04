@@ -18,7 +18,7 @@ public class OnceSchedule implements Schedule {
 
 	@Override
 	public String toString() {
-		return "once " + baseSchedule;
+		return "once, " + baseSchedule;
 	}
 
 }

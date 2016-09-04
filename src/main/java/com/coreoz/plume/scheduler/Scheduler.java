@@ -85,7 +85,7 @@ public final class Scheduler {
 			runnable
 		);
 
-		logger.debug("Scheduling job '{}'", job.name());
+		logger.info("Scheduling job '{}' to run {}", job.name(), job.schedule());
 		parkInPool(job, false);
 		jobs.indexedByName().put(name, job);
 
