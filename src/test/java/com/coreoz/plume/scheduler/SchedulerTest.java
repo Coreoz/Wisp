@@ -1,6 +1,6 @@
 package com.coreoz.plume.scheduler;
 
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
