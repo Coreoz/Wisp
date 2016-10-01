@@ -27,6 +27,4 @@ public class Schedules {
 		return new FixedHourSchedule(time);
 	}
 
-	// TODO add an API with cron expression (in CronSchedules)
-
 }
