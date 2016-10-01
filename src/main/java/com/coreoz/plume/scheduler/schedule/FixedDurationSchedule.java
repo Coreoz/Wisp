@@ -1,21 +1,23 @@
 package com.coreoz.plume.scheduler.schedule;
 
+import java.time.Duration;
+
 public class FixedDurationSchedule implements Schedule {
 
-	private final long intervalInMillis;
+	private final Duration frequency;
 
-	public FixedDurationSchedule(long intervalInMillis) {
-		this.intervalInMillis = intervalInMillis;
+	public FixedDurationSchedule(Duration frequency) {
+		this.frequency = frequency;
 	}
 
 	@Override
 	public long nextExecutionInMillis(int executionsCount, long currentTimeInMillis) {
-		return currentTimeInMillis + intervalInMillis;
+		return currentTimeInMillis + frequency.toMillis();
 	}
 
 	@Override
 	public String toString() {
-		return "every " + intervalInMillis + "ms";
+		return "every " + frequency;
 	}
 
 }

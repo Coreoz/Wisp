@@ -2,6 +2,7 @@ package com.coreoz.plume.scheduler;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -26,7 +27,7 @@ public class SchedulerTest {
 		scheduler.schedule(
 			"test",
 			singleJob,
-			Schedules.executeOnce(Schedules.fixedDurationSchedule(1))
+			Schedules.executeOnce(Schedules.fixedDurationSchedule(Duration.ofMillis(1)))
 		);
 
 		waitOn(singleJob, () -> singleJob.countExecuted.get() > 0, 10000);
@@ -58,17 +59,17 @@ public class SchedulerTest {
 		scheduler.schedule(
 			"job1",
 			job1,
-			Schedules.executeOnce(Schedules.fixedDurationSchedule(1))
+			Schedules.executeOnce(Schedules.fixedDurationSchedule(Duration.ofMillis(1)))
 		);
 		scheduler.schedule(
 			"job2",
 			job2,
-			Schedules.executeOnce(Schedules.fixedDurationSchedule(1))
+			Schedules.executeOnce(Schedules.fixedDurationSchedule(Duration.ofMillis(1)))
 		);
 		scheduler.schedule(
 			"job3",
 			job3,
-			Schedules.executeOnce(Schedules.fixedDurationSchedule(1))
+			Schedules.executeOnce(Schedules.fixedDurationSchedule(Duration.ofMillis(1)))
 		);
 		Thread thread1 = new Thread(() -> {
 			waitOn(job1, () -> job1.countExecuted.get() > 0, 10000);
@@ -107,7 +108,7 @@ public class SchedulerTest {
 		Scheduler scheduler = new Scheduler(1, 10, timeProvider);
 		SingleJob job1 = new SingleJob();
 		long beforeExecutionTime = timeProvider.currentTime();
-		long jobIntervalTime = 40L;
+		Duration jobIntervalTime = Duration.ofMillis(40);
 
 		Job job = scheduler.schedule(
 			"job1",
@@ -122,7 +123,7 @@ public class SchedulerTest {
 		scheduler.gracefullyShutdown();
 
 		assertThat(job.lastExecutionTimeInMillis() - beforeExecutionTime)
-			.isGreaterThanOrEqualTo(jobIntervalTime);
+			.isGreaterThanOrEqualTo(jobIntervalTime.toMillis());
 	}
 
 	@Test
@@ -133,7 +134,7 @@ public class SchedulerTest {
 		scheduler.schedule(
 			"job1",
 			job1,
-			Schedules.fixedDurationSchedule(-1000)
+			Schedules.fixedDurationSchedule(Duration.ofMillis(-1000))
 		);
 		Thread thread1 = new Thread(() -> {
 			waitOn(job1, () -> job1.countExecuted.get() > 0, 500);

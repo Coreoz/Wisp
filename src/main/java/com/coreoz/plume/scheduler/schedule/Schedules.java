@@ -2,18 +2,21 @@ package com.coreoz.plume.scheduler.schedule;
 
 import java.time.Duration;
 
+/**
+ * Static helpers to build {@link Schedule}
+ */
 public class Schedules {
 
 	public static Schedule fixedDurationSchedule(Duration duration) {
-		return new FixedDurationSchedule(duration.getSeconds() * 1000);
-	}
-
-	public static Schedule fixedDurationSchedule(long intervalInMillis) {
-		return new FixedDurationSchedule(intervalInMillis);
+		return new FixedDurationSchedule(duration);
 	}
 
 	public static Schedule executeOnce(Schedule schedule) {
 		return new OnceSchedule(schedule);
+	}
+
+	public static Schedule afterInitialDelay(Schedule schedule, Duration initialDelay) {
+		return new AfterInitialDelaySchedule(schedule, initialDelay);
 	}
 
 	/**
@@ -24,7 +27,6 @@ public class Schedules {
 		return new FixedHourSchedule(time);
 	}
 
-	// TODO add API for a schedule with the first execution after an initial delay
 	// TODO add an API with cron expression (in CronSchedules)
 
 }
