@@ -29,7 +29,7 @@ public class SchedulerTest {
 		scheduler.schedule(
 			"test",
 			singleJob,
-			Schedules.executeOnce(Schedules.fixedFrequencySchedule(Duration.ofMillis(1)))
+			Schedules.executeOnce(Schedules.fixedDelaySchedule(Duration.ofMillis(1)))
 		);
 
 		waitOn(singleJob, () -> singleJob.countExecuted.get() > 0, 10000);
@@ -61,17 +61,17 @@ public class SchedulerTest {
 		scheduler.schedule(
 			"job1",
 			job1,
-			Schedules.executeOnce(Schedules.fixedFrequencySchedule(Duration.ofMillis(1)))
+			Schedules.executeOnce(Schedules.fixedDelaySchedule(Duration.ofMillis(1)))
 		);
 		scheduler.schedule(
 			"job2",
 			job2,
-			Schedules.executeOnce(Schedules.fixedFrequencySchedule(Duration.ofMillis(1)))
+			Schedules.executeOnce(Schedules.fixedDelaySchedule(Duration.ofMillis(1)))
 		);
 		scheduler.schedule(
 			"job3",
 			job3,
-			Schedules.executeOnce(Schedules.fixedFrequencySchedule(Duration.ofMillis(1)))
+			Schedules.executeOnce(Schedules.fixedDelaySchedule(Duration.ofMillis(1)))
 		);
 		Thread thread1 = new Thread(() -> {
 			waitOn(job1, () -> job1.countExecuted.get() > 0, 10000);
@@ -115,7 +115,7 @@ public class SchedulerTest {
 		Job job = scheduler.schedule(
 			"job1",
 			job1,
-			Schedules.executeOnce(Schedules.fixedFrequencySchedule(jobIntervalTime))
+			Schedules.executeOnce(Schedules.fixedDelaySchedule(jobIntervalTime))
 		);
 		Thread thread1 = new Thread(() -> {
 			waitOn(job1, () -> job1.countExecuted.get() > 0, 10000);
@@ -136,7 +136,7 @@ public class SchedulerTest {
 		scheduler.schedule(
 			"job1",
 			job1,
-			Schedules.fixedFrequencySchedule(Duration.ofMillis(-1000))
+			Schedules.fixedDelaySchedule(Duration.ofMillis(-1000))
 		);
 		Thread thread1 = new Thread(() -> {
 			waitOn(job1, () -> job1.countExecuted.get() > 0, 500);

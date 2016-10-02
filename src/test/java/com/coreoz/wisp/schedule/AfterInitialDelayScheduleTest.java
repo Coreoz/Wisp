@@ -21,7 +21,7 @@ public class AfterInitialDelayScheduleTest {
 
 	@Test
 	public void second_execution_should_depends_only_on_the_first_delay() {
-		Schedule every5ms = Schedules.fixedFrequencySchedule(Duration.ofMillis(5));
+		Schedule every5ms = Schedules.fixedDelaySchedule(Duration.ofMillis(5));
 		AfterInitialDelaySchedule afterUnusedDelay = new AfterInitialDelaySchedule(every5ms, null);
 
 		assertThat(afterUnusedDelay.nextExecutionInMillis(1, 0)).isEqualTo(5);

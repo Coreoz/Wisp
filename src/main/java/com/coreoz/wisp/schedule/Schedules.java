@@ -7,16 +7,8 @@ import java.time.Duration;
  */
 public class Schedules {
 
-	public static Schedule fixedFrequencySchedule(Duration duration) {
+	public static Schedule fixedDelaySchedule(Duration duration) {
 		return new FixedDelaySchedule(duration);
-	}
-
-	public static Schedule executeOnce(Schedule schedule) {
-		return new OnceSchedule(schedule);
-	}
-
-	public static Schedule afterInitialDelay(Schedule schedule, Duration initialDelay) {
-		return new AfterInitialDelaySchedule(schedule, initialDelay);
 	}
 
 	/**
@@ -25,6 +17,16 @@ public class Schedules {
 	 */
 	public static Schedule executeAt(String time) {
 		return new FixedHourSchedule(time);
+	}
+
+	// composition schedules
+
+	public static Schedule executeOnce(Schedule schedule) {
+		return new OnceSchedule(schedule);
+	}
+
+	public static Schedule afterInitialDelay(Schedule schedule, Duration initialDelay) {
+		return new AfterInitialDelaySchedule(schedule, initialDelay);
 	}
 
 }
