@@ -3,8 +3,11 @@ package com.coreoz.wisp.schedule.cron;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Locale;
 
 import com.coreoz.wisp.schedule.Schedule;
+import com.cronutils.descriptor.CronDescriptor;
+import com.cronutils.model.Cron;
 import com.cronutils.model.CronType;
 import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
@@ -28,10 +31,14 @@ public class CronSchedule implements Schedule {
 		CronDefinitionBuilder.instanceDefinitionFor(CronType.QUARTZ)
 	);
 
-	private final ExecutionTime cronExpression;
+	private static final CronDescriptor ENGLISH_DESCRIPTOR = CronDescriptor.instance(Locale.ENGLISH);
 
-	public CronSchedule(ExecutionTime cronExpression) {
-		this.cronExpression = cronExpression;
+	private final ExecutionTime cronExpression;
+	private final String description;
+
+	public CronSchedule(Cron cronExpression) {
+		this.cronExpression = ExecutionTime.forCron(cronExpression);
+		this.description = ENGLISH_DESCRIPTOR.describe(cronExpression);
 	}
 
 	@Override
@@ -44,12 +51,19 @@ public class CronSchedule implements Schedule {
 		.toEpochMilli();
 	}
 
+
+
+	@Override
+	public String toString() {
+		return description;
+	}
+
 	/**
 	 * Create a {@link Schedule} from a cron expression based on the Unix format,
 	 * e.g. 1 * * * * for each minute.
 	 */
 	public static CronSchedule parseUnixCron(String cronExpression) {
-		return new CronSchedule(ExecutionTime.forCron(UNIX_CRON_PARSER.parse(cronExpression)));
+		return new CronSchedule(UNIX_CRON_PARSER.parse(cronExpression));
 	}
 
 	/**
@@ -57,7 +71,7 @@ public class CronSchedule implements Schedule {
 	 * e.g. 0 * * * * ? * for each minute.
 	 */
 	public static CronSchedule parseQuartzCron(String cronExpression) {
-		return new CronSchedule(ExecutionTime.forCron(QUARTZ_CRON_PARSER.parse(cronExpression)));
+		return new CronSchedule(QUARTZ_CRON_PARSER.parse(cronExpression));
 	}
 
 }

@@ -6,13 +6,11 @@ import java.time.Duration;
 
 import org.junit.Test;
 
-import com.coreoz.wisp.schedule.cron.CronSchedule;
-
 public class CronScheduleTest {
 
 	@Test
 	public void should_calcule_the_next_execution_time_based_on_a_unix_cron_expression() {
-		CronSchedule everyMinuteScheduler = CronSchedule.parseUnixCron("1 * * * *");
+		CronSchedule everyMinuteScheduler = CronSchedule.parseUnixCron("* * * * *");
 
 		assertThat(everyMinuteScheduler.nextExecutionInMillis(0, 0))
 		.isEqualTo(Duration.ofMinutes(1).toMillis());
