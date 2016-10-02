@@ -10,7 +10,7 @@ import dagger.Module;
 import dagger.Provides;
 
 @Module(includes = DaggerServicesModule.class)
-public class DaggerSchedulerModule {
+public class DaggerWispSchedulerModule {
 
 	@Provides
 	@Singleton

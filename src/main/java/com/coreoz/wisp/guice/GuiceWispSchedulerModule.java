@@ -4,7 +4,7 @@ import com.coreoz.wisp.Scheduler;
 import com.coreoz.wisp.plume.SchedulerProvider;
 import com.google.inject.AbstractModule;
 
-public class GuiceSchedulerModule extends AbstractModule {
+public class GuiceWispSchedulerModule extends AbstractModule {
 
 	@Override
 	protected void configure() {
