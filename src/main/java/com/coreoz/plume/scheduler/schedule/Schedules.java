@@ -7,8 +7,8 @@ import java.time.Duration;
  */
 public class Schedules {
 
-	public static Schedule fixedDurationSchedule(Duration duration) {
-		return new FixedDurationSchedule(duration);
+	public static Schedule fixedFrequencySchedule(Duration duration) {
+		return new FixedDelaySchedule(duration);
 	}
 
 	public static Schedule executeOnce(Schedule schedule) {

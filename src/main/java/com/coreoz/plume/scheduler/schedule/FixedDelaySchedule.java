@@ -2,11 +2,11 @@ package com.coreoz.plume.scheduler.schedule;
 
 import java.time.Duration;
 
-public class FixedDurationSchedule implements Schedule {
+public class FixedDelaySchedule implements Schedule {
 
 	private final Duration frequency;
 
-	public FixedDurationSchedule(Duration frequency) {
+	public FixedDelaySchedule(Duration frequency) {
 		this.frequency = frequency;
 	}
 
