@@ -100,11 +100,16 @@ create a `ScheduledJobs` class:
 public class ScheduledJobs {
 
     @Inject
-    public ScheduledJobs(Scheduler scheduler, MyService myService) {
+    public ScheduledJobs(Scheduler scheduler, MyService service1, MyOtherService service2) {
         scheduler.schedule(
             "My service job",
-            myService::processToBeExecuted,
+            service1::processToBeExecuted,
             Schedules.executeAt("03:30")
+        );
+        scheduler.schedule(
+            "My other service job",
+            service2::processToBeExecuted,
+            Schedules.fixedDelaySchedule(Duration.ofSeconds(40))
         );
     }
 
