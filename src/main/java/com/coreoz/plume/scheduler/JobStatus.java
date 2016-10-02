@@ -1,5 +1,8 @@
 package com.coreoz.plume.scheduler;
 
+/**
+ * Describe a {@link Job} state
+ */
 public enum JobStatus {
 
 	/**

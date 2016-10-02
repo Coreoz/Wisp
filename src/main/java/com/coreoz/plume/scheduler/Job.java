@@ -4,6 +4,13 @@ import java.time.Instant;
 
 import com.coreoz.plume.scheduler.schedule.Schedule;
 
+/**
+ * A {@code Job} is the association of a {@link Runnable} process
+ * and its running {@link Schedule}.<br/>
+ * <br/>
+ * A {@code Job} also contains information about its status and its running
+ * statistics.
+ */
 public class Job {
 
 	private volatile JobStatus status;

@@ -15,6 +15,9 @@ import com.coreoz.plume.scheduler.time.SystemTimeProvider;
 import com.coreoz.plume.scheduler.time.TimeProvider;
 
 /**
+ * A {@code Scheduler} instance reference a group of jobs
+ * and is responsible to schedule these jobs at the expected time.<br/>
+ * <br/>
  * A job is executed only once at a time.
  * The scheduler will never execute the same job twice at a time.
  */
@@ -32,6 +35,8 @@ public final class Scheduler {
 
 	private volatile int threadAvailableCount;
 	private volatile boolean shuttingDown;
+
+	// constructors
 
 	public Scheduler() {
 		this(DEFAULT_THREAD_POOL_SIZE);
@@ -56,10 +61,27 @@ public final class Scheduler {
 		this.shuttingDown = false;
 	}
 
+	// public API
+
+	/**
+	 * Schedule the executions of a process.
+	 *
+	 * @param runnable The process to be executed at a schedule
+	 * @param when The {@link Schedule} at which the process will be executed
+	 * @return The corresponding {@link Job} created.
+	 */
 	public Job schedule(Runnable runnable, Schedule when) {
 		return schedule(null, runnable, when);
 	}
 
+	/**
+	 * Schedule the executions of a process.
+	 *
+	 * @param nullableName The name of the created job
+	 * @param runnable The process to be executed at a schedule
+	 * @param when The {@link Schedule} at which the process will be executed
+	 * @return The corresponding {@link Job} created.
+	 */
 	public synchronized Job schedule(String nullableName, Runnable runnable, Schedule when) {
 		Objects.requireNonNull(runnable, "Runnable must not be null");
 		Objects.requireNonNull(when, "Schedule must not be null");
@@ -92,10 +114,16 @@ public final class Scheduler {
 		return job;
 	}
 
+	/**
+	 * Fetch the status of all the jobs that has been registered on the {@code Scheduler}
+	 */
 	public Collection<Job> jobStatus() {
 		return jobs.indexedByName().values();
 	}
 
+	/**
+	 * Find a job by its name
+	 */
 	public Optional<Job> findJob(String name) {
 		return Optional.ofNullable(jobs.indexedByName().get(name));
 	}
@@ -123,6 +151,9 @@ public final class Scheduler {
 		threadPool.gracefullyShutdown();
 	}
 
+	/**
+	 * Fetch statistics about the current {@code Scheduler}
+	 */
 	public SchedulerStats stats() {
 		return SchedulerStats.of(threadPool.stats());
 	}
