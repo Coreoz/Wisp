@@ -17,7 +17,7 @@ public class FixedDelaySchedule implements Schedule {
 
 	@Override
 	public String toString() {
-		return "every " + frequency;
+		return "every " + frequency.toMillis() + "ms";
 	}
 
 }
