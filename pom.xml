@@ -4,13 +4,13 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.coreoz</groupId>
-	<artifactId>plume-scheduler</artifactId>
+	<artifactId>wisp</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>Plume Scheduler</name>
-	<description>An easy to use Java Scheduler with a minimal footprint</description>
-	<url>https://github.com/Coreoz/Plume-scheduler</url>
+	<name>Wisp Scheduler</name>
+	<description>A simple Java Scheduler with a minimal footprint</description>
+	<url>https://github.com/Coreoz/Wisp</url>
 
 	<organization>
 		<name>Coreoz</name>
@@ -26,9 +26,9 @@
 	</licenses>
 
 	<scm>
-		<developerConnection>scm:git:git@github.com:Coreoz/Plume-scheduler.git</developerConnection>
-		<connection>scm:git:git@github.com:Coreoz/Plume-scheduler.git</connection>
-		<url>https://github.com/Coreoz/Plume-scheduler</url>
+		<developerConnection>scm:git:git@github.com:Coreoz/Wisp.git</developerConnection>
+		<connection>scm:git:git@github.com:Coreoz/Wisp.git</connection>
+		<url>https://github.com/Coreoz/Wisp</url>
 	</scm>
 
 	<distributionManagement>
@@ -57,8 +57,6 @@
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 		<additionalparam>-Xdoclint:none</additionalparam>
-
-		<plume.version>1.0.0-SNAPSHOT</plume.version>
 	</properties>
 
 	<profiles>
@@ -134,6 +132,7 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
+			<version>1.16.10</version>
 			<scope>provided</scope>
 		</dependency>
 	
@@ -147,46 +146,40 @@
 		<dependency>
 			<groupId>com.coreoz</groupId>
 			<artifactId>plume-services</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>com.google.inject</groupId>
 			<artifactId>guice</artifactId>
+			<version>4.1.0</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>com.google.dagger</groupId>
 			<artifactId>dagger</artifactId>
+			<version>2.7</version>
 			<optional>true</optional>
 		</dependency>
 
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
+			<version>4.12</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
+			<version>3.5.2</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
+			<version>1.1.7</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>com.coreoz</groupId>
-				<artifactId>plume-dependencies</artifactId>
-				<version>${plume.version}</version>
-				<scope>import</scope>
-				<type>pom</type>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
 
 </project>
