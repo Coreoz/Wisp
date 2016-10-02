@@ -7,13 +7,16 @@ import java.time.Duration;
  */
 public class Schedules {
 
+	/**
+	 * Execute a job at a fixed delay after each execution
+	 */
 	public static Schedule fixedDelaySchedule(Duration duration) {
 		return new FixedDelaySchedule(duration);
 	}
 
 	/**
 	 * Execute a job at the same time every day.
-	 * The file format must be "hh:mm" or "hh:mm:ss"
+	 * The time format must be "hh:mm" or "hh:mm:ss"
 	 */
 	public static Schedule executeAt(String time) {
 		return new FixedHourSchedule(time);
