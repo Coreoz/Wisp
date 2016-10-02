@@ -1,4 +1,117 @@
-Plume Scheduler
-===============
+Wisp Scheduler
+==============
 
-An easy to use Java Scheduler with a minimal footprint.
+Wisp is a simple Java Scheduler with a minimal footprint.
+Wisp weigh only 30Kb and has zero dependency.
+It will only create threads that will be used: if one thread is enough to run all the jobs,
+then only one thread will be created.
+A second thread will be created only when 2 jobs have to run at the exact same time.
+
+The scheduler precision will depend on the system load.
+Though a job will never be executed early, it will generally run after 1ms the scheduled time.
+
+Wisp is compatible with Java 8 and higher.
+
+Getting started
+---------------
+
+Include Wisp in your project:
+```xml
+<dependency>
+    <groupId>com.coreoz</groupId>
+    <artifactId>wisp</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+</dependency
+```
+
+Schedule a job:
+```java
+Scheduler scheduler = new Scheduler();
+
+scheduler.schedule(
+    () -> System.out.println("My first job"),           // the runnable to be scheduled
+    Schedules.fixedDelaySchedule(Duration.ofMinutes(5)) // the schedule associated to the runnable
+);
+```
+Done!
+
+A project should generally contain only one instance of a `Scheduler`.
+So either a dependency injection framework handles this instance,
+or either a static instance of `Scheduler` should be created.
+
+Schedules
+---------
+
+When a job is created or done executing, the schedule associated to the job
+is called to determine when the job should next be executed.
+There are multiple implications:
+- the same job will never be executed twice at a time,
+- if a job has to be executed at a fixed frequency,
+then the job has to finish running before the next execution is scheduled ;
+else the next execution will be skipped. 
+
+### Basics schedules
+Basics schedules are referenced in the `Schedules` class:
+- `fixedDelaySchedule(Duration)`: execute a job at a fixed delay after each execution
+- `executeAt(String)`: execute a job at the same time every day, e.g. `executeAt("05:30")`
+
+### Composition
+Schedules are very flexible and can easily be composed, e.g:
+- `Schedules.afterInitialDelay(Schedules.fixedDelaySchedule(Duration.ofMinutes(5)), Duration.ZERO)`:
+the job will be first executed ASAP and then with a fixed delay of 5 minutes between each execution,
+- `Schedules.executeOnce(Schedules.executeAt("05:30"))`: the job will be executed once at 05:30.
+
+### Cron
+Schedules can be created using [cron expressions](https://en.wikipedia.org/wiki/Cron#CRON_expression).
+This feature is made possible by the use of [cron-utils](https://github.com/jmrozanec/cron-utils).
+So to use cron expression, cron-utils should be added in the project:
+```xml
+<dependency>
+    <groupId>com.cronutils</groupId>
+    <artifactId>cron-utils</artifactId>
+    <version>5.0.0</version>
+</dependency
+```
+Then to create a job which is executed every hour at the 30th minute,
+you can create the schedule: `CronSchedule.parseQuartzCron("0 30 * * * ? *")`.
+
+Cron expression should be created and checked using a tool like [Cron Maker](http://www.cronmaker.com/).
+
+### Custom schedules
+Custom schedules can be created,
+see the [Schedule](src/main/java/com/coreoz/wisp/schedule/Schedule.java) interface.
+
+### Past schedule
+Schedules can reference a past time.
+However once a past time is returned by a schedule,
+the associated job will never be executed again.
+At the first execution, if a past time is referenced a warning will be logged
+but no exception will be raised.
+
+Plume Framework integration
+---------------------------
+
+If you are already using [Plume Framework](https://github.com/Coreoz/Plume),
+you should:
+
+create a `ScheduledJobs` class:
+```java
+@Singleton
+public class ScheduledJobs {
+
+    @Inject
+    public ScheduledJobs(Scheduler scheduler, MyService myService) {
+        scheduler.schedule(
+            "My service job",
+            myService::processToBeExecuted,
+            Schedules.executeAt("03:30")
+        );
+    }
+
+}
+```
+then install the jobs in your application module:
+```java
+install(new GuiceSchedulerModule());
+bind(ScheduledJobs.class).asEagerSingleton();
+```
