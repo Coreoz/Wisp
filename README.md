@@ -108,7 +108,7 @@ public class ScheduledJobs {
         );
         scheduler.schedule(
             "My other service job",
-            service2::processToBeExecuted,
+            service2::otherProcessToBeExecuted,
             Schedules.fixedDelaySchedule(Duration.ofSeconds(40))
         );
     }
