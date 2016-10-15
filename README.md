@@ -8,7 +8,7 @@ then only one thread will be created.
 A second thread will be created only when 2 jobs have to run at the exact same time.
 
 The scheduler precision will depend on the system load.
-Though a job will never be executed early, it will generally run after 1ms the scheduled time.
+Though a job will never be executed early, it will generally run after 1ms of the scheduled time.
 
 Wisp is compatible with Java 8 and higher.
 
@@ -48,7 +48,7 @@ There are multiple implications:
 - the same job will never be executed twice at a time,
 - if a job has to be executed at a fixed frequency,
 then the job has to finish running before the next execution is scheduled ;
-else the next execution will be skipped. 
+else the next execution will likely be skipped (depending of the `Schedule` implementation). 
 
 ### Basics schedules
 Basics schedules are referenced in the `Schedules` class:
@@ -69,7 +69,7 @@ So to use cron expression, cron-utils should be added in the project:
 <dependency>
     <groupId>com.cronutils</groupId>
     <artifactId>cron-utils</artifactId>
-    <version>5.0.0</version>
+    <version>5.0.1</version>
 </dependency
 ```
 Then to create a job which is executed every hour at the 30th minute,
