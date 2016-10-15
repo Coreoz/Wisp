@@ -146,7 +146,7 @@
 		<dependency>
 			<groupId>com.coreoz</groupId>
 			<artifactId>plume-services</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
+			<version>1.0.0-beta2</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
