@@ -4,7 +4,7 @@
 
 	<groupId>com.coreoz</groupId>
 	<artifactId>wisp</artifactId>
-	<version>1.0.0-rc2</version>
+	<version>1.0.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>Wisp Scheduler</name>
@@ -37,7 +37,7 @@
 		<developerConnection>scm:git:git@github.com:Coreoz/Wisp.git</developerConnection>
 		<connection>scm:git:git@github.com:Coreoz/Wisp.git</connection>
 		<url>https://github.com/Coreoz/Wisp</url>
-		<tag>1.0.0-rc2</tag>
+		<tag>HEAD</tag>
 	</scm>
 
 	<distributionManagement>
