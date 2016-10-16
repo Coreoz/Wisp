@@ -20,7 +20,7 @@ Include Wisp in your project:
 <dependency>
     <groupId>com.coreoz</groupId>
     <artifactId>wisp</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0-rc2</version>
 </dependency
 ```
 
