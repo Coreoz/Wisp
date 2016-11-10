@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
@@ -25,10 +24,20 @@
 		</license>
 	</licenses>
 
+	<developers>
+		<developer>
+			<name>Aurélien Manteaux</name>
+			<email>amanteaux@coreoz.com</email>
+			<organization>Coreoz</organization>
+			<organizationUrl>http://coreoz.com/</organizationUrl>
+		</developer>
+	</developers>
+
 	<scm>
 		<developerConnection>scm:git:git@github.com:Coreoz/Wisp.git</developerConnection>
 		<connection>scm:git:git@github.com:Coreoz/Wisp.git</connection>
 		<url>https://github.com/Coreoz/Wisp</url>
+		<tag>HEAD</tag>
 	</scm>
 
 	<distributionManagement>
@@ -123,6 +132,7 @@
 					<useReleaseProfile>false</useReleaseProfile>
 					<releaseProfiles>release</releaseProfiles>
 					<goals>deploy</goals>
+					<tagNameFormat>@{project.version}</tagNameFormat>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -135,18 +145,18 @@
 			<version>1.16.10</version>
 			<scope>provided</scope>
 		</dependency>
-	
+
 		<dependency>
 			<groupId>com.cronutils</groupId>
 			<artifactId>cron-utils</artifactId>
-			<version>5.0.0</version>
+			<version>5.0.1</version>
 			<optional>true</optional>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>com.coreoz</groupId>
 			<artifactId>plume-services</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
+			<version>1.0.0-beta3</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
