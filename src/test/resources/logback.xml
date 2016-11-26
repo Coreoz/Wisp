@@ -6,7 +6,7 @@
     </encoder>
   </appender>
   
-  <logger name="com.coreoz.wisp" level="INFO"/>
+  <logger name="com.coreoz.wisp" level="ERROR"/>
   
   <root level="INFO">
     <appender-ref ref="STDOUT" />
