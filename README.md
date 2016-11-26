@@ -1,6 +1,9 @@
 Wisp Scheduler
 ==============
 
+[![Build Status](https://travis-ci.org/Coreoz/Wisp.svg?branch=master)](https://travis-ci.org/Coreoz/Wisp)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.coreoz/wisp/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.coreoz/wisp)
+
 Wisp is a simple Java Scheduler with a minimal footprint.
 Wisp weigh only 30Kb and has zero dependency.
 It will only create threads that will be used: if one thread is enough to run all the jobs,
