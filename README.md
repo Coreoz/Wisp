@@ -124,3 +124,11 @@ then install the jobs in your application module:
 install(new GuiceSchedulerModule());
 bind(ScheduledJobs.class).asEagerSingleton();
 ```
+Moreover, [Plume Services](https://github.com/Coreoz/Plume/tree/master/plume-services)
+must be in your classpath:
+```xml
+<dependency>
+    <groupId>com.coreoz</groupId>
+    <artifactId>plume-services</artifactId>
+</dependency
+```
