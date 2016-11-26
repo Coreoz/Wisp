@@ -6,10 +6,10 @@ Wisp Scheduler
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.coreoz/wisp/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.coreoz/wisp)
 
 Wisp is a simple Java Scheduler with a minimal footprint.
-Wisp weigh only 30Kb and has zero dependency.
+Wisp weighs only 30Kb and has zero dependency.
 It will only create threads that will be used: if one thread is enough to run all the jobs,
 then only one thread will be created.
-A second thread will be created only when 2 jobs have to run at the exact same time.
+A second thread will only be created when 2 jobs have to run at the exact same time.
 
 The scheduler precision will depend on the system load.
 Though a job will never be executed early, it will generally run after 1ms of the scheduled time.
