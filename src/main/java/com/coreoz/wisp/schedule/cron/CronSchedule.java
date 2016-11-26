@@ -42,7 +42,7 @@ public class CronSchedule implements Schedule {
 	}
 
 	@Override
-	public long nextExecutionInMillis(int executionsCount, long currentTimeInMillis) {
+	public long nextExecutionInMillis(long currentTimeInMillis, int executionsCount, Long lastExecutionTimeInMillis) {
 		return cronExpression.nextExecution(ZonedDateTime.ofInstant(
 			Instant.ofEpochMilli(currentTimeInMillis),
 			ZoneId.systemDefault()
@@ -50,8 +50,6 @@ public class CronSchedule implements Schedule {
 		.toInstant()
 		.toEpochMilli();
 	}
-
-
 
 	@Override
 	public String toString() {

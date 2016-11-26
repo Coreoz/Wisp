@@ -9,11 +9,11 @@ public class OnceSchedule implements Schedule {
 	}
 
 	@Override
-	public long nextExecutionInMillis(int executionsCount, long currentTimeInMillis) {
+	public long nextExecutionInMillis(long currentTimeInMillis, int executionsCount, Long lastExecutionTimeInMillis) {
 		if(executionsCount > 0) {
 			return WILL_NOT_BE_EXECUTED_AGAIN;
 		}
-		return baseSchedule.nextExecutionInMillis(executionsCount, currentTimeInMillis);
+		return baseSchedule.nextExecutionInMillis(currentTimeInMillis, executionsCount, lastExecutionTimeInMillis);
 	}
 
 	@Override

@@ -93,7 +93,7 @@ public final class Scheduler {
 		}
 
 		long currentTimeInMillis = timeProvider.currentTime();
-		if(when.nextExecutionInMillis(0, currentTimeInMillis) < currentTimeInMillis) {
+		if(when.nextExecutionInMillis(currentTimeInMillis, 0, null) < currentTimeInMillis) {
 			logger.warn("The job '{}' is scheduled at a paste date: it will never be executed", name);
 		}
 
@@ -271,7 +271,9 @@ public final class Scheduler {
 		// if the job has not been executed, do not recalculate the next execution time
 		if(job.status() != JobStatus.READY) {
 			job.nextExecutionTimeInMillis(
-				job.schedule().nextExecutionInMillis(job.executionsCount(), currentTimeInMillis)
+				job.schedule().nextExecutionInMillis(
+					currentTimeInMillis, job.executionsCount(), job.lastExecutionTimeInMillis()
+				)
 			);
 		}
 

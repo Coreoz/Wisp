@@ -9,8 +9,6 @@ import java.time.ZonedDateTime;
 
 import org.junit.Test;
 
-import com.coreoz.wisp.schedule.FixedHourSchedule;
-
 public class FixedHourScheduleTest {
 
 	@Test
@@ -38,9 +36,9 @@ public class FixedHourScheduleTest {
 			.of(2016, 8, 31)
 			.atStartOfDay()
 			.atZone(ectZone);
-		long midDay = augustMidnight.toEpochSecond() * 1000;
+		long midnight = augustMidnight.toEpochSecond() * 1000;
 
-		assertThat(new FixedHourSchedule("00:00:00").nextExecutionInMillis(0, midDay)).isEqualTo(midDay);
+		assertThat(new FixedHourSchedule("00:00:00").nextExecutionInMillis(midnight, 0, null)).isEqualTo(midnight);
 	}
 
 	@Test
@@ -50,38 +48,64 @@ public class FixedHourScheduleTest {
 			.of(2016, 8, 31)
 			.atStartOfDay()
 			.atZone(ectZone);
-		long midDay = augustMidnight.toEpochSecond() * 1000;
+		long midnight = augustMidnight.toEpochSecond() * 1000;
 
-		assertThat(new FixedHourSchedule("00:00:00").durationUntilNextExecutionInMillis(0, midDay)).isEqualTo(0);
-		assertThat(new FixedHourSchedule("00:00:01").durationUntilNextExecutionInMillis(0, midDay)).isEqualTo(1000);
+		assertThat(new FixedHourSchedule("00:00:00").durationUntilNextExecutionInMillis(midnight, null)).isEqualTo(0);
+		assertThat(new FixedHourSchedule("00:00:01").durationUntilNextExecutionInMillis(midnight, null)).isEqualTo(1000);
 	}
 
 	@Test
 	public void should_calcule_next_execution_from_midday() {
 		ZoneId ectZone = ZoneId.of("Europe/Paris");
-		ZonedDateTime augustMidnight = LocalDate
+		ZonedDateTime augustMidday = LocalDate
 			.of(2016, 8, 31)
 			.atTime(12, 0)
 			.atZone(ectZone);
-		long midDay = augustMidnight.toEpochSecond() * 1000;
+		long midday = augustMidday.toEpochSecond() * 1000;
 
-		assertThat(new FixedHourSchedule("12:00:00").durationUntilNextExecutionInMillis(0, midDay)).isEqualTo(0);
-		assertThat(new FixedHourSchedule("12:00:01").durationUntilNextExecutionInMillis(0, midDay)).isEqualTo(1000);
-		assertThat(new FixedHourSchedule("11:59:59").durationUntilNextExecutionInMillis(0, midDay)).isEqualTo(24 * 60 * 60 * 1000 - 1000);
-		assertThat(new FixedHourSchedule("00:00:00").durationUntilNextExecutionInMillis(0, midDay)).isEqualTo(12 * 60 * 60 * 1000);
+		assertThat(new FixedHourSchedule("12:00:00").durationUntilNextExecutionInMillis(midday, null)).isEqualTo(0);
+		assertThat(new FixedHourSchedule("12:00:01").durationUntilNextExecutionInMillis(midday, null)).isEqualTo(1000);
+		assertThat(new FixedHourSchedule("11:59:59").durationUntilNextExecutionInMillis(midday, null)).isEqualTo(24 * 60 * 60 * 1000 - 1000);
+		assertThat(new FixedHourSchedule("00:00:00").durationUntilNextExecutionInMillis(midday, null)).isEqualTo(12 * 60 * 60 * 1000);
 	}
 
 	@Test
 	public void should_calcule_next_execution_with_dst() {
 		ZoneId ectZone = ZoneId.of("Europe/Paris");
-		ZonedDateTime augustMidnight = LocalDate
+		ZonedDateTime midnight = LocalDate
 			.of(2016, 10, 30)
 			.atStartOfDay()
 			.atZone(ectZone);
-		long midDay = augustMidnight.toEpochSecond() * 1000;
+		long midnightMillis = midnight.toEpochSecond() * 1000;
 
-		assertThat(new FixedHourSchedule("02:00:00", ectZone).durationUntilNextExecutionInMillis(0, midDay)).isEqualTo(2 * 60 * 60 * 1000);
-		assertThat(new FixedHourSchedule("03:00:00", ectZone).durationUntilNextExecutionInMillis(0, midDay)).isEqualTo(4 * 60 * 60 * 1000);
+		assertThat(new FixedHourSchedule("02:00:00", ectZone).durationUntilNextExecutionInMillis(midnightMillis, null)).isEqualTo(2 * 60 * 60 * 1000);
+		assertThat(new FixedHourSchedule("03:00:00", ectZone).durationUntilNextExecutionInMillis(midnightMillis, null)).isEqualTo(4 * 60 * 60 * 1000);
+	}
+
+	@Test
+	public void should_calcule_next_execution_during_time_change() {
+		ZoneId ectZone = ZoneId.of("Europe/Paris");
+		ZonedDateTime oneSecBeforeTimeChange = LocalDate
+			.of(2016, 10, 30)
+			.atTime(1, 59, 59)
+			.atZone(ectZone);
+		long oneSecBeforeTimeChangeMillis = oneSecBeforeTimeChange.toEpochSecond() * 1000;
+		long oneSecAfterTimeChangeMillis = (oneSecBeforeTimeChange.toEpochSecond() + 2) * 1000;
+
+		assertThat(new FixedHourSchedule("02:00:00", ectZone).durationUntilNextExecutionInMillis(oneSecBeforeTimeChangeMillis, null)).isEqualTo(1000);
+		assertThat(new FixedHourSchedule("02:00:00", ectZone).durationUntilNextExecutionInMillis(oneSecAfterTimeChangeMillis, null)).isEqualTo(25 * 60 * 60 * 1000 - 1000);
+	}
+
+	@Test
+	public void should_not_return_current_time_if_last_execution_equals_current_time() {
+		ZoneId ectZone = ZoneId.of("Europe/Paris");
+		ZonedDateTime augustMidnight = LocalDate
+			.of(2016, 8, 31)
+			.atStartOfDay()
+			.atZone(ectZone);
+		long midnight = augustMidnight.toEpochSecond() * 1000;
+
+		assertThat(new FixedHourSchedule("00:00:00").durationUntilNextExecutionInMillis(midnight, midnight)).isEqualTo(24 * 60 * 60 * 1000);
 	}
 
 }

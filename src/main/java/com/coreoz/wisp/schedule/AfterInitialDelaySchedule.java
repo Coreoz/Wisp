@@ -13,11 +13,11 @@ public class AfterInitialDelaySchedule implements Schedule {
 	}
 
 	@Override
-	public long nextExecutionInMillis(int executionsCount, long currentTimeInMillis) {
+	public long nextExecutionInMillis(long currentTimeInMillis, int executionsCount, Long lastExecutionTimeInMillis) {
 		if(executionsCount == 0) {
 			return initialDelay.toMillis() + currentTimeInMillis;
 		}
-		return baseSchedule.nextExecutionInMillis(executionsCount, currentTimeInMillis);
+		return baseSchedule.nextExecutionInMillis(currentTimeInMillis, executionsCount, lastExecutionTimeInMillis);
 	}
 
 	@Override

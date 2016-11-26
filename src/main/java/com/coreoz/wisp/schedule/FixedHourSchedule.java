@@ -44,22 +44,28 @@ public class FixedHourSchedule implements Schedule {
 	}
 
 	@Override
-	public long nextExecutionInMillis(int executionsCount, long currentTimeInMillis) {
-		return durationUntilNextExecutionInMillis(executionsCount, currentTimeInMillis)
+	public long nextExecutionInMillis(long currentTimeInMillis, int executionsCount, Long lastExecutionTimeInMillis) {
+		return durationUntilNextExecutionInMillis(currentTimeInMillis, lastExecutionTimeInMillis)
 				+ currentTimeInMillis;
 	}
 
-	long durationUntilNextExecutionInMillis(int executionsCount, long currentTimeInMillis) {
+	long durationUntilNextExecutionInMillis(long currentTimeInMillis, Long lastExecutionTimeInMillis) {
 		ZonedDateTime currentDateTime = Instant
 				.ofEpochMilli(currentTimeInMillis)
 				.atZone(zoneId);
 
 		return currentDateTime
-			.until(nextExecutionDateTime(currentDateTime), ChronoUnit.MILLIS);
+			.until(
+				nextExecutionDateTime(
+					currentDateTime,
+					lastExecutionTimeInMillis != null && lastExecutionTimeInMillis == currentTimeInMillis
+				),
+				ChronoUnit.MILLIS
+			);
 	}
 
-	private ZonedDateTime nextExecutionDateTime(ZonedDateTime currentDateTime) {
-		if(currentDateTime.toLocalTime().compareTo(executionTime) <= 0) {
+	private ZonedDateTime nextExecutionDateTime(ZonedDateTime currentDateTime, boolean nextExecutionShouldBeNextDay) {
+		if(!nextExecutionShouldBeNextDay && currentDateTime.toLocalTime().compareTo(executionTime) <= 0) {
 			return executionTime.atDate(currentDateTime.toLocalDate()).atZone(zoneId);
 		}
 		return executionTime.atDate(currentDateTime.toLocalDate()).plusDays(1).atZone(zoneId);
