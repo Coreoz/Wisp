@@ -38,7 +38,9 @@ public class FixedHourScheduleTest {
 			.atZone(ectZone);
 		long midnight = augustMidnight.toEpochSecond() * 1000;
 
-		assertThat(new FixedHourSchedule("00:00:00").nextExecutionInMillis(midnight, 0, null)).isEqualTo(midnight);
+		assertThat(
+			new FixedHourSchedule("00:00:00", ectZone).nextExecutionInMillis(midnight, 0, null)
+		).isEqualTo(midnight);
 	}
 
 	@Test
@@ -50,8 +52,12 @@ public class FixedHourScheduleTest {
 			.atZone(ectZone);
 		long midnight = augustMidnight.toEpochSecond() * 1000;
 
-		assertThat(new FixedHourSchedule("00:00:00").durationUntilNextExecutionInMillis(midnight, null)).isEqualTo(0);
-		assertThat(new FixedHourSchedule("00:00:01").durationUntilNextExecutionInMillis(midnight, null)).isEqualTo(1000);
+		assertThat(
+			new FixedHourSchedule("00:00:00", ectZone).durationUntilNextExecutionInMillis(midnight, null)
+		).isEqualTo(0);
+		assertThat(
+			new FixedHourSchedule("00:00:01", ectZone).durationUntilNextExecutionInMillis(midnight, null)
+		).isEqualTo(1000);
 	}
 
 	@Test
@@ -63,10 +69,18 @@ public class FixedHourScheduleTest {
 			.atZone(ectZone);
 		long midday = augustMidday.toEpochSecond() * 1000;
 
-		assertThat(new FixedHourSchedule("12:00:00").durationUntilNextExecutionInMillis(midday, null)).isEqualTo(0);
-		assertThat(new FixedHourSchedule("12:00:01").durationUntilNextExecutionInMillis(midday, null)).isEqualTo(1000);
-		assertThat(new FixedHourSchedule("11:59:59").durationUntilNextExecutionInMillis(midday, null)).isEqualTo(24 * 60 * 60 * 1000 - 1000);
-		assertThat(new FixedHourSchedule("00:00:00").durationUntilNextExecutionInMillis(midday, null)).isEqualTo(12 * 60 * 60 * 1000);
+		assertThat(
+			new FixedHourSchedule("12:00:00", ectZone).durationUntilNextExecutionInMillis(midday, null)
+		).isEqualTo(0);
+		assertThat(
+			new FixedHourSchedule("12:00:01", ectZone).durationUntilNextExecutionInMillis(midday, null)
+		).isEqualTo(1000);
+		assertThat(
+			new FixedHourSchedule("11:59:59", ectZone).durationUntilNextExecutionInMillis(midday, null)
+		).isEqualTo(24 * 60 * 60 * 1000 - 1000);
+		assertThat(
+			new FixedHourSchedule("00:00:00", ectZone).durationUntilNextExecutionInMillis(midday, null)
+		).isEqualTo(12 * 60 * 60 * 1000);
 	}
 
 	@Test
@@ -92,8 +106,14 @@ public class FixedHourScheduleTest {
 		long oneSecBeforeTimeChangeMillis = oneSecBeforeTimeChange.toEpochSecond() * 1000;
 		long oneSecAfterTimeChangeMillis = (oneSecBeforeTimeChange.toEpochSecond() + 2) * 1000;
 
-		assertThat(new FixedHourSchedule("02:00:00", ectZone).durationUntilNextExecutionInMillis(oneSecBeforeTimeChangeMillis, null)).isEqualTo(1000);
-		assertThat(new FixedHourSchedule("02:00:00", ectZone).durationUntilNextExecutionInMillis(oneSecAfterTimeChangeMillis, null)).isEqualTo(25 * 60 * 60 * 1000 - 1000);
+		assertThat(
+			new FixedHourSchedule("02:00:00", ectZone)
+				.durationUntilNextExecutionInMillis(oneSecBeforeTimeChangeMillis, null)
+		).isEqualTo(1000);
+		assertThat(
+			new FixedHourSchedule("02:00:00", ectZone)
+				.durationUntilNextExecutionInMillis(oneSecAfterTimeChangeMillis, null)
+		).isEqualTo(25 * 60 * 60 * 1000 - 1000);
 	}
 
 	@Test
@@ -105,7 +125,9 @@ public class FixedHourScheduleTest {
 			.atZone(ectZone);
 		long midnight = augustMidnight.toEpochSecond() * 1000;
 
-		assertThat(new FixedHourSchedule("00:00:00").durationUntilNextExecutionInMillis(midnight, midnight)).isEqualTo(24 * 60 * 60 * 1000);
+		assertThat(
+			new FixedHourSchedule("00:00:00", ectZone).durationUntilNextExecutionInMillis(midnight, midnight)
+		).isEqualTo(24 * 60 * 60 * 1000);
 	}
 
 }
