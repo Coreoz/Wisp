@@ -121,14 +121,17 @@ public class ScheduledJobs {
 ```
 then install the jobs in your application module:
 ```java
-install(new GuiceSchedulerModule());
+install(new GuiceWispSchedulerModule());
 bind(ScheduledJobs.class).asEagerSingleton();
 ```
 Moreover, [Plume Services](https://github.com/Coreoz/Plume/tree/master/plume-services)
-must be in your classpath:
+must be in your classpath and installed:
 ```xml
 <dependency>
     <groupId>com.coreoz</groupId>
     <artifactId>plume-services</artifactId>
 </dependency
+```
+```java
+install(new GuiceServicesModule());
 ```
