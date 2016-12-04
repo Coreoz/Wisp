@@ -126,12 +126,14 @@ bind(ScheduledJobs.class).asEagerSingleton();
 ```
 Moreover, [Plume Services](https://github.com/Coreoz/Plume/tree/master/plume-services)
 must be in your classpath and installed:
+- pom.xml:
 ```xml
 <dependency>
     <groupId>com.coreoz</groupId>
     <artifactId>plume-services</artifactId>
 </dependency
 ```
+- in your application module:
 ```java
 install(new GuiceServicesModule());
 ```
