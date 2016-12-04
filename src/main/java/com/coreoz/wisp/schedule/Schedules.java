@@ -15,7 +15,7 @@ public class Schedules {
 	}
 
 	/**
-	 * Execute a job at the same time every day.
+	 * Execute a job at the same time once a day.
 	 * The time format must be "hh:mm" or "hh:mm:ss"
 	 */
 	public static Schedule executeAt(String time) {
