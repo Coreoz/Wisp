@@ -31,7 +31,6 @@ class RunningJob implements Runnable {
 
 	@Override
 	public void run() {
-		job.status(JobStatus.READY);
 		if(waitAndNotifySchedulerBeforeExecution()) {
 			long startExecutionTime = timeProvider.currentTime();
 			logger.debug("Starting job '{}' execution...", job.name());
@@ -59,7 +58,6 @@ class RunningJob implements Runnable {
 	private boolean waitAndNotifySchedulerBeforeExecution() {
 		if(waitUntilExecution()) {
 			job.status(JobStatus.RUNNING);
-			scheduler.checkNextJobToRun(false);
 			return true;
 		}
 		return false;
@@ -75,7 +73,9 @@ class RunningJob implements Runnable {
 			timeBeforeNextExecution = timeBeforeNextExecution();
 			if(timeBeforeNextExecution > 0) {
 				synchronized (job) {
-					job.wait(timeBeforeNextExecution);
+					if(shouldExecuteJob) {
+						job.wait(timeBeforeNextExecution);
+					}
 				}
 			}
 		} while (timeBeforeNextExecution > 0 && shouldExecuteJob);

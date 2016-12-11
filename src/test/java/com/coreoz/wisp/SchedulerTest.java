@@ -10,13 +10,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.coreoz.wisp.Job;
-import com.coreoz.wisp.Scheduler;
 import com.coreoz.wisp.schedule.Schedules;
 import com.coreoz.wisp.stats.SchedulerStats;
 import com.coreoz.wisp.time.SystemTimeProvider;
-
-import lombok.SneakyThrows;
 
 public class SchedulerTest {
 
@@ -40,8 +36,7 @@ public class SchedulerTest {
 	}
 
 	@Test
-	@SneakyThrows
-	public void check_racing_conditions() {
+	public void check_racing_conditions() throws InterruptedException {
 		for(int i = 1; i <= 10000; i++) {
 			should_run_each_job_once();
 			logger.info("iteration {} done", i);
@@ -146,6 +141,89 @@ public class SchedulerTest {
 		scheduler.gracefullyShutdown();
 
 		assertThat(job1.countExecuted.get()).isEqualTo(0);
+	}
+
+	@Test
+	public void should_shutdown_instantly_if_no_job_is_running__races_test() {
+		for(int i=0; i<100; i++) {
+			should_shutdown_instantly_if_no_job_is_running();
+		}
+	}
+
+	@Test
+	public void should_shutdown_instantly_if_no_job_is_running() {
+		Scheduler scheduler = new Scheduler();
+
+		scheduler.schedule("job1", () -> {}, Schedules.executeOnce(Schedules.fixedDelaySchedule(Duration.ofSeconds(60))));
+		scheduler.schedule("job2", () -> {}, Schedules.executeOnce(Schedules.fixedDelaySchedule(Duration.ofSeconds(20))));
+
+		long beforeShutdownTime = System.currentTimeMillis();
+		scheduler.gracefullyShutdown();
+
+		assertThat(System.currentTimeMillis() - beforeShutdownTime).isLessThan(Duration.ofSeconds(5).toMillis());
+	}
+
+	@Test
+	public void should_not_create_more_threads_than_necessary_on_startup__races_test() {
+		for(int i=0; i<100; i++) {
+			should_not_create_more_threads_than_necessary_on_startup();
+		}
+	}
+
+	@Test
+	public void should_not_create_more_threads_than_necessary_on_startup() {
+		Scheduler scheduler = new Scheduler();
+
+		scheduler.schedule("job1", () -> {}, Schedules.executeOnce(Schedules.fixedDelaySchedule(Duration.ofSeconds(60))));
+		scheduler.schedule("job2", () -> {}, Schedules.executeOnce(Schedules.fixedDelaySchedule(Duration.ofSeconds(20))));
+
+		SchedulerStats stats = scheduler.stats();
+		scheduler.gracefullyShutdown();
+
+		assertThat(
+			stats.getThreadPoolStats().getActiveThreads()
+			+ stats.getThreadPoolStats().getIdleThreads()
+		)
+		.isEqualTo(1);
+	}
+
+	@Test
+	public void should_not_create_more_threads_than_jobs_scheduled_over_time__races_test()
+			throws InterruptedException {
+		for(int i=0; i<100; i++) {
+			should_not_create_more_threads_than_jobs_scheduled_over_time();
+		}
+	}
+
+	@Test
+	public void should_not_create_more_threads_than_jobs_scheduled_over_time() throws InterruptedException {
+		Scheduler scheduler = new Scheduler();
+
+		SingleJob job1 = new SingleJob();
+		SingleJob job2 = new SingleJob();
+
+		scheduler.schedule("job1", job1, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		scheduler.schedule("job2", job2, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+
+		Thread thread1 = new Thread(() -> {
+			waitOn(job1, () -> job1.countExecuted.get() > 50, 100);
+		});
+		thread1.start();
+		thread1.join();
+		Thread thread2 = new Thread(() -> {
+			waitOn(job2, () -> job2.countExecuted.get() > 50, 100);
+		});
+		thread2.start();
+		thread2.join();
+
+		SchedulerStats stats = scheduler.stats();
+		scheduler.gracefullyShutdown();
+
+		assertThat(
+			stats.getThreadPoolStats().getActiveThreads()
+			+ stats.getThreadPoolStats().getIdleThreads()
+		)
+		.isLessThanOrEqualTo(2);
 	}
 
 	private static class SingleJob implements Runnable {

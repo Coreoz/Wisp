@@ -41,7 +41,15 @@ class JobThreadPool {
 		}
 	}
 
-	void submitJob(RunningJob job) {
+	void submitJob(RunningJob job, boolean isSubmiterEndingJob) {
+		// this enables to execute the next job on the same thread
+		// that the job that has just finished executing.
+		// => it enables to avoid creating an unneeded new thread
+		if(isSubmiterEndingJob) {
+			toRunAsap.add(job);
+			return;
+		}
+
 		JobThread toRun = toRun(job);
 
 		if(toRun != null) {

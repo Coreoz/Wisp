@@ -16,7 +16,7 @@ public class SchedulerProvider implements Provider<Scheduler> {
 	public SchedulerProvider(TimeProvider timeProvider) {
 		this.scheduler = new Scheduler(
 			Scheduler.DEFAULT_THREAD_POOL_SIZE,
-			Scheduler.DEFAULT_MINIMUM_DELAY_TO_REPLACE_JOB,
+			Scheduler.DEFAULT_MINIMUM_DELAY_IN_MILLIS_TO_REPLACE_JOB,
 			new PlumeTimeProvider(timeProvider)
 		);
 	}

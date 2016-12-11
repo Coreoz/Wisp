@@ -26,7 +26,7 @@ public final class Scheduler {
 	private static final Logger logger = LoggerFactory.getLogger(Scheduler.class);
 
 	public static final int DEFAULT_THREAD_POOL_SIZE = 10;
-	public static final long DEFAULT_MINIMUM_DELAY_TO_REPLACE_JOB = 10L;
+	public static final long DEFAULT_MINIMUM_DELAY_IN_MILLIS_TO_REPLACE_JOB = 10L;
 
 	private final Jobs jobs;
 	private final JobThreadPool threadPool;
@@ -43,7 +43,7 @@ public final class Scheduler {
 	}
 
 	public Scheduler(int nbThreads) {
-		this(nbThreads, DEFAULT_MINIMUM_DELAY_TO_REPLACE_JOB);
+		this(nbThreads, DEFAULT_MINIMUM_DELAY_IN_MILLIS_TO_REPLACE_JOB);
 	}
 
 	public Scheduler(int nbThreads, long minimumDelayInMillisToReplaceJob) {
@@ -192,7 +192,7 @@ public final class Scheduler {
 				// the cancel job in returned to the pool
 			} else if(jobs.nextRunningJob() == null
 				|| jobs.nextRunningJob().job().status() != JobStatus.READY) {
-				runNextJob();
+				runNextJob(isEndingJob);
 			}
 			if(logger.isTraceEnabled()) {
 				logger.trace("end nextExecutionsOrder : {}", jobs.nextExecutionsOrder().stream().map(Job::name).collect(Collectors.joining()));
@@ -203,7 +203,7 @@ public final class Scheduler {
 	void parkInPool(Job executed, boolean isEndingJob) {
 		if(logger.isTraceEnabled()) {
 			logger.trace(
-				"parkInPool {} - running {}",
+				"parkInPool {} - next running {}",
 				executed.name(),
 				Optional
 					.ofNullable(jobs.nextRunningJob())
@@ -246,9 +246,14 @@ public final class Scheduler {
 		}
 	}
 
-	private void runNextJob() {
+	private void runNextJob(boolean isEndingJob) {
+		if(isEndingJob) {
+			// if the job a finished executing on the current thread,
+			// then the current thread becomes available for the next job to execute
+			threadAvailableCount++;
+		}
 		if(threadAvailableCount > 0) {
-			threadPool.submitJob(nextRunningJob());
+			threadPool.submitJob(nextRunningJob(), isEndingJob);
 			threadAvailableCount--;
 		} else {
 			logger.warn("Job thread pool is full, either tasks take too much time to execute "
@@ -262,6 +267,7 @@ public final class Scheduler {
 			this,
 			timeProvider
 		));
+		jobs.nextRunningJob().job().status(JobStatus.READY);
 		return jobs.nextRunningJob();
 	}
 
