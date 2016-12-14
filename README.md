@@ -25,7 +25,7 @@ Include Wisp in your project:
     <groupId>com.coreoz</groupId>
     <artifactId>wisp</artifactId>
     <version>1.0.0-rc2</version>
-</dependency
+</dependency>
 ```
 
 Schedule a job:
@@ -74,7 +74,7 @@ So to use cron expression, cron-utils should be added in the project:
     <groupId>com.cronutils</groupId>
     <artifactId>cron-utils</artifactId>
     <version>5.0.1</version>
-</dependency
+</dependency>
 ```
 Then to create a job which is executed every hour at the 30th minute,
 you can create the schedule: `CronSchedule.parseQuartzCron("0 30 * * * ? *")`.
@@ -131,7 +131,7 @@ must be in your classpath and installed:
 <dependency>
     <groupId>com.coreoz</groupId>
     <artifactId>plume-services</artifactId>
-</dependency
+</dependency>
 ```
 - in your application module:
 ```java
