@@ -64,6 +64,8 @@ Schedules are very flexible and can easily be composed, e.g:
 - `Schedules.afterInitialDelay(Schedules.fixedDelaySchedule(Duration.ofMinutes(5)), Duration.ZERO)`:
 the job will be first executed ASAP and then with a fixed delay of 5 minutes between each execution,
 - `Schedules.executeOnce(Schedules.executeAt("05:30"))`: the job will be executed once at 05:30.
+- `Schedules.executeOnce(Schedules.fixedDelaySchedule(Duration.ofSeconds(10)))`:
+the job will be executed once 10 seconds after it has been scheduled.
 
 ### Cron
 Schedules can be created using [cron expressions](https://en.wikipedia.org/wiki/Cron#CRON_expression).
