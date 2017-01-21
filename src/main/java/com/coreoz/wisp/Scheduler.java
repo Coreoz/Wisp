@@ -286,7 +286,7 @@ public final class Scheduler {
 				logger.error(
 					"An exception was raised during the job next execution time calculation,"
 					+ " therefore the job {} will not be executed again.",
-					job,
+					job.name(),
 					t
 				);
 				job.nextExecutionTimeInMillis(Schedule.WILL_NOT_BE_EXECUTED_AGAIN);
