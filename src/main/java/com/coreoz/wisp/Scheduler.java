@@ -276,11 +276,21 @@ public final class Scheduler {
 
 		// if the job has not been executed, do not recalculate the next execution time
 		if(job.status() != JobStatus.READY) {
-			job.nextExecutionTimeInMillis(
-				job.schedule().nextExecutionInMillis(
-					currentTimeInMillis, job.executionsCount(), job.lastExecutionTimeInMillis()
-				)
-			);
+			try {
+				job.nextExecutionTimeInMillis(
+					job.schedule().nextExecutionInMillis(
+						currentTimeInMillis, job.executionsCount(), job.lastExecutionTimeInMillis()
+					)
+				);
+			} catch (Throwable t) {
+				logger.error(
+					"An exception was raised during the job next execution time calculation,"
+					+ " therefore the job {} will not be executed again.",
+					job,
+					t
+				);
+				job.nextExecutionTimeInMillis(Schedule.WILL_NOT_BE_EXECUTED_AGAIN);
+			}
 		}
 
 		if(job.nextExecutionTimeInMillis() >= currentTimeInMillis) {

@@ -3,6 +3,7 @@ package com.coreoz.wisp;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -224,6 +225,46 @@ public class SchedulerTest {
 			+ stats.getThreadPoolStats().getIdleThreads()
 		)
 		.isLessThanOrEqualTo(2);
+	}
+
+	@Test
+	public void exception_in_schedule_should_not_alter_scheduler() throws InterruptedException {
+		Scheduler scheduler = new Scheduler(1, 0);
+
+		AtomicBoolean isJob1ExecutedAfterJob2 = new AtomicBoolean(false);
+		SingleJob job2 = new SingleJob();
+		SingleJob job1 = new SingleJob() {
+			@Override
+			public void run() {
+				super.run();
+				if(job2.countExecuted.get() > 0) {
+					isJob1ExecutedAfterJob2.set(true);
+				}
+			}
+		};
+
+		scheduler.schedule("job1", job1, Schedules.fixedDelaySchedule(Duration.ofMillis(5)));
+		scheduler.schedule("job2", job2, (currentTimeInMillis, executionsCount, lastExecutionTimeInMillis) -> {
+			if(executionsCount == 0) {
+				return currentTimeInMillis;
+			}
+			throw new RuntimeException();
+		});
+
+		Thread thread1 = new Thread(() -> {
+			waitOn(job1, () -> isJob1ExecutedAfterJob2.get(), 1000);
+		});
+		thread1.start();
+		thread1.join();
+		Thread thread2 = new Thread(() -> {
+			waitOn(job2, () -> job2.countExecuted.get() > 0, 1000);
+		});
+		thread2.start();
+		thread2.join();
+
+		scheduler.gracefullyShutdown();
+
+		assertThat(isJob1ExecutedAfterJob2.get()).isTrue();
 	}
 
 	private static class SingleJob implements Runnable {
