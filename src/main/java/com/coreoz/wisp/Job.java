@@ -88,7 +88,7 @@ public class Job {
 
 	@Override
 	public String toString() {
-		return "Job " + name + " [" + status + "] - " + schedule
+		return "Job " + name + " [" + status + "] - will run " + schedule
 				+ " - next execution at " + Instant.ofEpochMilli(nextExecutionTimeInMillis);
 	}
 
