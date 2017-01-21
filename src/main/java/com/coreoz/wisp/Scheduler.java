@@ -166,10 +166,6 @@ public final class Scheduler {
 				logger.trace("begin nextExecutionsOrder : {}", jobs.nextExecutionsOrder().stream().map(Job::name).collect(Collectors.joining()));
 			}
 
-			if(isEndingJob) {
-				threadAvailableCount++;
-			}
-
 			if(jobs.nextExecutionsOrder().isEmpty()) {
 				logger.debug("No more job to execute");
 				return;
