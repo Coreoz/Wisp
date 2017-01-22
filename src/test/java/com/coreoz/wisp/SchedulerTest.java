@@ -228,6 +228,14 @@ public class SchedulerTest {
 	}
 
 	@Test
+	public void exception_in_schedule_should_not_alter_scheduler__races_test()
+			throws InterruptedException {
+		for(int i=0; i<1000; i++) {
+			exception_in_schedule_should_not_alter_scheduler();
+		}
+	}
+
+	@Test
 	public void exception_in_schedule_should_not_alter_scheduler() throws InterruptedException {
 		Scheduler scheduler = new Scheduler(1, 0);
 
@@ -243,7 +251,7 @@ public class SchedulerTest {
 			}
 		};
 
-		scheduler.schedule("job1", job1, Schedules.fixedDelaySchedule(Duration.ofMillis(5)));
+		scheduler.schedule("job1", job1, Schedules.fixedDelaySchedule(Duration.ofMillis(3)));
 		scheduler.schedule("job2", job2, (currentTimeInMillis, executionsCount, lastExecutionTimeInMillis) -> {
 			if(executionsCount == 0) {
 				return currentTimeInMillis;
