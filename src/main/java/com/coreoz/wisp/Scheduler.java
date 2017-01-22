@@ -248,13 +248,15 @@ public final class Scheduler {
 			// then the current thread becomes available for the next job to execute
 			threadAvailableCount++;
 		}
+
 		if(threadAvailableCount > 0) {
-			threadPool.submitJob(nextRunningJob(), isEndingJob);
 			threadAvailableCount--;
 		} else {
 			logger.warn("Job thread pool is full, either tasks take too much time to execute "
 					+ "or either the thread pool is too small");
 		}
+
+		threadPool.submitJob(nextRunningJob(), isEndingJob);
 	}
 
 	private RunningJob nextRunningJob() {
@@ -289,7 +291,11 @@ public final class Scheduler {
 			}
 		}
 
-		if(job.nextExecutionTimeInMillis() >= currentTimeInMillis) {
+		if(job.nextExecutionTimeInMillis() >= currentTimeInMillis
+			// if a job has just been interrupted, it should be scheduled again,
+			// even if its next execution should already have taken place.
+			|| job.status() == JobStatus.READY
+		) {
 			job.status(JobStatus.SCHEDULED);
 		} else {
 			job.status(JobStatus.DONE);
