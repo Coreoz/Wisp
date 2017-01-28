@@ -24,7 +24,7 @@ Include Wisp in your project:
 <dependency>
     <groupId>com.coreoz</groupId>
     <artifactId>wisp</artifactId>
-    <version>1.0.0-rc2</version>
+    <version>1.0.0-rc3</version>
 </dependency>
 ```
 
@@ -75,7 +75,7 @@ So to use cron expression, cron-utils should be added in the project:
 <dependency>
     <groupId>com.cronutils</groupId>
     <artifactId>cron-utils</artifactId>
-    <version>5.0.1</version>
+    <version>5.0.5</version>
 </dependency>
 ```
 Then to create a job which is executed every hour at the 30th minute,
@@ -127,15 +127,11 @@ install(new GuiceWispSchedulerModule());
 bind(ScheduledJobs.class).asEagerSingleton();
 ```
 Moreover, [Plume Services](https://github.com/Coreoz/Plume/tree/master/plume-services)
-must be in your classpath and installed:
-- pom.xml:
+must be in your classpath:
 ```xml
 <dependency>
     <groupId>com.coreoz</groupId>
     <artifactId>plume-services</artifactId>
 </dependency>
 ```
-- in your application module:
-```java
-install(new GuiceServicesModule());
-```
+
