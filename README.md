@@ -98,40 +98,5 @@ Plume Framework integration
 ---------------------------
 
 If you are already using [Plume Framework](https://github.com/Coreoz/Plume),
-you should:
-
-create a `ScheduledJobs` class:
-```java
-@Singleton
-public class ScheduledJobs {
-
-    @Inject
-    public ScheduledJobs(Scheduler scheduler, MyService service1, MyOtherService service2) {
-        scheduler.schedule(
-            "My service job",
-            service1::processToBeExecuted,
-            Schedules.executeAt("03:30")
-        );
-        scheduler.schedule(
-            "My other service job",
-            service2::otherProcessToBeExecuted,
-            Schedules.fixedDelaySchedule(Duration.ofSeconds(40))
-        );
-    }
-
-}
-```
-then install the jobs in your application module:
-```java
-install(new GuiceWispSchedulerModule());
-bind(ScheduledJobs.class).asEagerSingleton();
-```
-Moreover, [Plume Services](https://github.com/Coreoz/Plume/tree/master/plume-services)
-must be in your classpath:
-```xml
-<dependency>
-    <groupId>com.coreoz</groupId>
-    <artifactId>plume-services</artifactId>
-</dependency>
-```
+please take a look at [Plume Scheduler](https://github.com/Coreoz/Plume/tree/master/plume-scheduler).
 
