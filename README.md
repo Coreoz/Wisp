@@ -24,7 +24,7 @@ Include Wisp in your project:
 <dependency>
     <groupId>com.coreoz</groupId>
     <artifactId>wisp</artifactId>
-    <version>1.0.0-rc3</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
@@ -75,7 +75,7 @@ So to use cron expression, cron-utils should be added in the project:
 <dependency>
     <groupId>com.cronutils</groupId>
     <artifactId>cron-utils</artifactId>
-    <version>5.0.5</version>
+    <version>6.0.2</version>
 </dependency>
 ```
 Then to create a job which is executed every hour at the 30th minute,
