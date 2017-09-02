@@ -1,9 +1,10 @@
 package com.coreoz.wisp.schedule.cron;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Locale;
+
+import org.threeten.bp.Instant;
+import org.threeten.bp.ZoneId;
+import org.threeten.bp.ZonedDateTime;
 
 import com.coreoz.wisp.schedule.Schedule;
 import com.cronutils.descriptor.CronDescriptor;
@@ -43,12 +44,15 @@ public class CronSchedule implements Schedule {
 
 	@Override
 	public long nextExecutionInMillis(long currentTimeInMillis, int executionsCount, Long lastExecutionTimeInMillis) {
-		return cronExpression.nextExecution(ZonedDateTime.ofInstant(
-			Instant.ofEpochMilli(currentTimeInMillis),
+		Instant currentInstant = Instant.ofEpochMilli(currentTimeInMillis);
+		return cronExpression.timeToNextExecution(ZonedDateTime.ofInstant(
+			currentInstant,
 			ZoneId.systemDefault()
 		))
-		.toInstant()
-		.toEpochMilli();
+		.transform(durationBetweenNextExecution -> 
+			currentInstant.plus(durationBetweenNextExecution).toEpochMilli()
+		)
+		.or(Schedule.WILL_NOT_BE_EXECUTED_AGAIN);
 	}
 
 	@Override
