@@ -53,8 +53,8 @@
 
 	<repositories>
 		<repository>
-			<id>oss.snapshot</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+			<id>oss.public</id>
+			<url>https://oss.sonatype.org/content/groups/public</url>
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
