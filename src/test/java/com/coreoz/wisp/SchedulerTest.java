@@ -1,8 +1,10 @@
 package com.coreoz.wisp;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
 
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -14,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.coreoz.wisp.schedule.Schedules;
 import com.coreoz.wisp.stats.SchedulerStats;
 import com.coreoz.wisp.time.SystemTimeProvider;
+import com.google.common.util.concurrent.Runnables;
 
 public class SchedulerTest {
 
@@ -273,6 +276,35 @@ public class SchedulerTest {
 		scheduler.gracefullyShutdown();
 
 		assertThat(isJob1ExecutedAfterJob2.get()).isTrue();
+	}
+
+	@Test
+	public void cancel_should_throw_IllegalArgumentException_if_the_job_name_does_not_exist() {
+		Scheduler scheduler = new Scheduler(1, 0);
+		try {
+			scheduler.cancel("job that does not exist");
+			fail("Should not accept to cancel a job that does not exist");
+		} catch (IllegalArgumentException e) {
+			// as expected :)
+		}
+		scheduler.gracefullyShutdown();
+	}
+
+	@Test
+	public void cancel_should_returned_a_job_with_the_done_status() throws Exception {
+		Scheduler scheduler = new Scheduler(1, 0);
+		scheduler.schedule("doNothing", Runnables.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(100)));
+		Job job = scheduler.cancel("doNothing").toCompletableFuture().get(1, TimeUnit.SECONDS);
+
+		assertThat(job).isNotNull();
+		assertThat(job.status()).isEqualTo(JobStatus.DONE);
+		assertThat(scheduler.jobStatus().isEmpty()).isTrue();
+		assertThat(job.name()).isEqualTo("doNothing");
+		assertThat(job.runnable()).isSameAs(Runnables.doNothing());
+
+		scheduler.gracefullyShutdown();
+
+		assertThat(job.executionsCount()).isEqualTo(0);
 	}
 
 	private static class SingleJob implements Runnable {

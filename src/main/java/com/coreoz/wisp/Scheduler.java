@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -126,6 +128,24 @@ public final class Scheduler {
 	 */
 	public Optional<Job> findJob(String name) {
 		return Optional.ofNullable(jobs.indexedByName().get(name));
+	}
+
+	/**
+	 * Cancel the execution of a job.<br>
+	 * If the job is running, the scheduler will wait until it is finished to remove it
+	 * from the jobs pool.
+	 * If the job is not running, the job will just be removed from the pool.<br>
+	 * After the job is cancelled, the job has the status {@link JobStatus#DONE}.
+	 *
+	 * @param jobName The job name to cancel
+	 * @return The promise that succeed when the job is correctly cancelled
+	 * and will not be executed again. If the job is running when {@link #cancel(String)}
+	 * is called, the promise will succeed when the job has finished executing.
+	 * @throws IllegalArgumentException if there is no job corresponding to the job name.
+	 */
+	public CompletionStage<Job> cancel(String jobName) {
+		// TODO to implement :)
+		return CompletableFuture.completedFuture(jobs.indexedByName().get(jobName));
 	}
 
 	/**
