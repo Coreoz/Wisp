@@ -131,7 +131,9 @@ public final class Scheduler {
 	}
 
 	/**
-	 * Cancel the execution of a job.<br>
+	 * Issue a cancellation order for a job and
+	 * returns immediately a promise that enables to follow the job cancellation status<br>
+	 * <br>
 	 * If the job is running, the scheduler will wait until it is finished to remove it
 	 * from the jobs pool.
 	 * If the job is not running, the job will just be removed from the pool.<br>
