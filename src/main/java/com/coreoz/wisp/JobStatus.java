@@ -14,7 +14,7 @@ public enum JobStatus {
 	 */
 	SCHEDULED,
 	/**
-	 * a scheduled job that will probably run sooner than another scheduled job :)
+	 * a scheduled job that is attached to a thread from the pool and ready to be executed when its time comes
 	 */
 	READY,
 	/**
