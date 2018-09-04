@@ -21,7 +21,7 @@ class JobThread {
 		this.toRun = new LinkedBlockingQueue<>();
 		this.threadLoop = new ThreadLoop(toRun);
 		this.thread = new Thread(threadLoop, "Wisp Scheduler Worker #" + threadCounter.getAndIncrement());
-		this.thread.setDaemon(true);
+		this.thread.setDaemon(false);
 		this.thread.start();
 	}
 
