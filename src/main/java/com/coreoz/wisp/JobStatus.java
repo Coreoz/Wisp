@@ -6,19 +6,21 @@ package com.coreoz.wisp;
 public enum JobStatus {
 
 	/**
-	 * will not be run ever again
+	 * the job will not be run ever again
 	 */
 	DONE,
 	/**
-	 * will be executed again, but not right now
+	 * the job will be executed
 	 */
 	SCHEDULED,
 	/**
 	 * a scheduled job that will probably run sooner than another scheduled job :)
+	 * @deprecated This status is not used anymore. It will be deleted in version 2.0.0.
 	 */
+	@Deprecated
 	READY,
 	/**
-	 * a job currently running
+	 * the job is currently running
 	 */
 	RUNNING,
 

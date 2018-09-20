@@ -32,8 +32,10 @@ public final class Scheduler {
 
 	private final Jobs jobs;
 	private final JobThreadPool threadPool;
-	private final TimeProvider timeProvider;
-	private final long minimumDelayInMillisToReplaceJob;
+	private TimeProvider timeProvider;
+	private long minimumDelayInMillisToReplaceJob;
+
+	private final SchedulerConfiguration config;
 
 	private volatile int threadAvailableCount;
 	private volatile boolean shuttingDown;
@@ -45,22 +47,28 @@ public final class Scheduler {
 	}
 
 	public Scheduler(int nbThreads) {
-		this(nbThreads, DEFAULT_MINIMUM_DELAY_IN_MILLIS_TO_REPLACE_JOB);
+		// TODO create the right configuration
+		this(new SchedulerConfiguration());
 	}
 
+	public Scheduler(SchedulerConfiguration config) {
+		this.config = config;
+
+		this.jobs = new Jobs();
+		// to replace with ScheduledThreadPoolExecutor
+		this.threadPool = new JobThreadPool(1);
+	}
+
+	@Deprecated
 	public Scheduler(int nbThreads, long minimumDelayInMillisToReplaceJob) {
 		this(nbThreads, minimumDelayInMillisToReplaceJob, new SystemTimeProvider());
 	}
 
+	@Deprecated
 	public Scheduler(int nbThreads, long minimumDelayInMillisToReplaceJob,
 			TimeProvider timeProvider) {
-		this.jobs = new Jobs();
-		this.minimumDelayInMillisToReplaceJob = minimumDelayInMillisToReplaceJob;
-		this.threadPool = new JobThreadPool(nbThreads);
-		this.timeProvider = timeProvider;
-
-		this.threadAvailableCount = nbThreads;
-		this.shuttingDown = false;
+		// TODO create the right configuration
+		this(new SchedulerConfiguration());
 	}
 
 	// public API
