@@ -47,8 +47,7 @@ public final class Scheduler {
 	}
 
 	public Scheduler(int nbThreads) {
-		// TODO create the right configuration
-		this(new SchedulerConfiguration());
+		this(SchedulerConfiguration.builder().maxThreads(nbThreads).build());
 	}
 
 	public Scheduler(SchedulerConfiguration config) {
@@ -59,16 +58,28 @@ public final class Scheduler {
 		this.threadPool = new JobThreadPool(1);
 	}
 
+	/**
+	 * @deprecated Use {@link #Scheduler(SchedulerConfiguration)} to specify multiple configuration values.
+	 * It will be deleted in version 2.0.0.
+	 */
 	@Deprecated
 	public Scheduler(int nbThreads, long minimumDelayInMillisToReplaceJob) {
 		this(nbThreads, minimumDelayInMillisToReplaceJob, new SystemTimeProvider());
 	}
 
+	/**
+	 * @deprecated Use {@link #Scheduler(SchedulerConfiguration)} to specify multiple configuration values.
+	 * It will be deleted in version 2.0.0.
+	 */
 	@Deprecated
 	public Scheduler(int nbThreads, long minimumDelayInMillisToReplaceJob,
 			TimeProvider timeProvider) {
-		// TODO create the right configuration
-		this(new SchedulerConfiguration());
+		this(SchedulerConfiguration
+			.builder()
+			.maxThreads(nbThreads)
+			.timeProvider(timeProvider)
+			.build()
+		);
 	}
 
 	// public API
