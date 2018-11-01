@@ -11,8 +11,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +37,8 @@ import lombok.SneakyThrows;
 public final class Scheduler {
 
 	private static final Logger logger = LoggerFactory.getLogger(Scheduler.class);
+
+	private static final AtomicInteger threadCounter = new AtomicInteger(1);
 
 	/**
 	 * @deprecated Default values are available in {@link SchedulerConfig}
@@ -98,14 +102,14 @@ public final class Scheduler {
 		this.nextExecutionsOrder = new ArrayList<>();
 		this.timeProvider = config.getTimeProvider();
 		this.launcherNotifier = new Object();
-		// TODO "Wisp Scheduler Worker #" + threadCounter.getAndIncrement());
 		this.threadPoolExecutor = new ThreadPoolExecutor(
 			config.getMinThreads(),
-			// +1 is to include the launcher thread
+			// +1 is to include the job launcher thread
 			config.getMaxThreads() + 1,
 			config.getThreadsKeepAliveTime().toMillis(),
 			TimeUnit.MILLISECONDS,
-			new LinkedBlockingQueue<>()
+			new LinkedBlockingQueue<>(),
+			new WispThreadFactory()
 		);
 		if(config.getMinThreads() > 0) {
 			this.threadPoolExecutor.prestartAllCoreThreads();
@@ -364,6 +368,20 @@ public final class Scheduler {
 			return;
 		}
 		scheduleNextExecution(jobToRun);
+	}
+
+	private static class WispThreadFactory implements ThreadFactory {
+		@Override
+		public Thread newThread(Runnable r) {
+			Thread thread = new Thread(r, "Wisp Scheduler Worker #" + threadCounter.getAndIncrement());
+			if (thread.isDaemon()) {
+				thread.setDaemon(false);
+			}
+			if (thread.getPriority() != Thread.NORM_PRIORITY) {
+				thread.setPriority(Thread.NORM_PRIORITY);
+			}
+			return thread;
+		}
 	}
 
 }
