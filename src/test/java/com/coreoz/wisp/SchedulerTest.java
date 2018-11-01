@@ -284,7 +284,7 @@ public class SchedulerTest {
 
 		assertThat(job).isNotNull();
 		assertThat(job.status()).isEqualTo(JobStatus.DONE);
-		assertThat(scheduler.jobStatus().isEmpty()).isTrue();
+		assertThat(scheduler.jobStatus().size()).isEqualTo(1);
 		assertThat(job.name()).isEqualTo("doNothing");
 		assertThat(job.runnable()).isSameAs(doNothing());
 

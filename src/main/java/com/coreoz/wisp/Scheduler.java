@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -39,6 +40,7 @@ public final class Scheduler {
 	private static final Logger logger = LoggerFactory.getLogger(Scheduler.class);
 
 	private static final AtomicInteger threadCounter = new AtomicInteger(1);
+	private static final Schedule willNeverBeExecuted = (c, e, l) -> Schedule.WILL_NOT_BE_EXECUTED_AGAIN;
 
 	/**
 	 * @deprecated Default values are available in {@link SchedulerConfig}
@@ -60,6 +62,7 @@ public final class Scheduler {
 	// jobs
 	private final Map<String, Job> indexedJobsByName;
 	private final ArrayList<Job> nextExecutionsOrder;
+	private final Map<String, CompletableFuture<Job>> cancelHandles;
 
 	private volatile boolean shuttingDown;
 
@@ -102,6 +105,7 @@ public final class Scheduler {
 		this.nextExecutionsOrder = new ArrayList<>();
 		this.timeProvider = config.getTimeProvider();
 		this.launcherNotifier = new Object();
+		this.cancelHandles = new ConcurrentHashMap<>();
 		this.threadPoolExecutor = new ThreadPoolExecutor(
 			config.getMinThreads(),
 			// +1 is to include the job launcher thread
@@ -175,7 +179,9 @@ public final class Scheduler {
 
 		// lock needed to make sure 2 jobs with the same name are not submitted at the same time
 		synchronized (indexedJobsByName) {
-			if(findJob(name).isPresent()) {
+			if(findJob(name)
+				.filter(existingJob -> existingJob.status() != JobStatus.DONE)
+				.isPresent()) {
 				throw new IllegalArgumentException("A job is already scheduled with the name:" + name);
 			}
 			indexedJobsByName.put(name, job);
@@ -217,8 +223,37 @@ public final class Scheduler {
 	 * @throws IllegalArgumentException if there is no job corresponding to the job name.
 	 */
 	public CompletionStage<Job> cancel(String jobName) {
-		// TODO to implement :)
-		return CompletableFuture.completedFuture(indexedJobsByName.get(jobName));
+		Job job = findJob(jobName).orElseThrow(IllegalArgumentException::new);
+
+		synchronized (this) {
+			if(job.status() == JobStatus.DONE) {
+				return CompletableFuture.completedFuture(job);
+			}
+			CompletableFuture<Job> existingHandle = cancelHandles.get(jobName);
+			if(existingHandle != null) {
+				return existingHandle;
+			}
+
+			job.schedule(willNeverBeExecuted);
+			if(job.status() == JobStatus.RUNNING) {
+				CompletableFuture<Job> promise = new CompletableFuture<>();
+				cancelHandles.put(jobName, promise);
+				return promise;
+			} else {
+				for (Iterator<Job> iterator = nextExecutionsOrder.iterator(); iterator.hasNext();) {
+					Job nextJob = iterator.next();
+					if(nextJob == job) {
+						iterator.remove();
+						job.status(JobStatus.DONE);
+						return CompletableFuture.completedFuture(job);
+					}
+				}
+				throw new IllegalStateException(
+					"Cannot find the job " + job + " in " + nextExecutionsOrder
+					+ ". Please open an issue on https://github.com/Coreoz/Wisp/issues"
+				);
+			}
+		}
 	}
 
 	/**
@@ -269,7 +304,7 @@ public final class Scheduler {
 
 	// internal
 
-	private void scheduleNextExecution(Job job) {
+	private synchronized void scheduleNextExecution(Job job) {
 		long currentTimeInMillis = timeProvider.currentTime();
 
 		try {
@@ -290,32 +325,41 @@ public final class Scheduler {
 
 		if(job.nextExecutionTimeInMillis() >= currentTimeInMillis) {
 			job.status(JobStatus.SCHEDULED);
-			synchronized (this) {
-				nextExecutionsOrder.add(job);
-				nextExecutionsOrder.sort(Comparator.comparing(
-					Job::nextExecutionTimeInMillis
-				));
+			nextExecutionsOrder.add(job);
+			nextExecutionsOrder.sort(Comparator.comparing(
+				Job::nextExecutionTimeInMillis
+			));
 
-				if(nextExecutionsOrder.size() == 1) {
-					if(!shuttingDown) {
-						threadPoolExecutor.execute(this::launcher);
-					}
-				} else {
-					synchronized (launcherNotifier) {
-						launcherNotifier.notify();
-					}
+			if(nextExecutionsOrder.size() == 1) {
+				if(!shuttingDown) {
+					threadPoolExecutor.execute(this::launcher);
+				}
+			} else {
+				synchronized (launcherNotifier) {
+					launcherNotifier.notify();
 				}
 			}
 		} else {
 			job.status(JobStatus.DONE);
+
+			CompletableFuture<Job> cancelHandle = cancelHandles.remove(job.name());
+			if(cancelHandle != null) {
+				cancelHandle.complete(job);
+			}
 		}
 	}
 
 	@SneakyThrows
 	private void launcher() {
 		while(!shuttingDown) {
-			long timeBeforeNextExecution = nextExecutionsOrder.get(0).nextExecutionTimeInMillis()
-				- timeProvider.currentTime();
+			long timeBeforeNextExecution = 0L;
+			synchronized (this) {
+				if(nextExecutionsOrder.isEmpty()) {
+					return;
+				}
+				timeBeforeNextExecution = nextExecutionsOrder.get(0).nextExecutionTimeInMillis()
+					- timeProvider.currentTime();
+			}
 
 			if(timeBeforeNextExecution > 0L) {
 				synchronized (launcherNotifier) {
@@ -332,17 +376,13 @@ public final class Scheduler {
 
 					Job jobToRun = nextExecutionsOrder.remove(0);
 					threadPoolExecutor.execute(() -> runJob(jobToRun));
-					// TODO check if the launcher does not need to remain alive like 10 min
-					// if nextExecutionsOrder is empty <= for the use case where only one job is running very frequently
-					if(nextExecutionsOrder.isEmpty()) {
-						return;
-					}
 				}
 			}
 		}
 	}
 
 	private void runJob(Job jobToRun) {
+		jobToRun.status(JobStatus.RUNNING);
 		long startExecutionTime = timeProvider.currentTime();
 		long timeBeforeNextExecution = jobToRun.nextExecutionTimeInMillis() - startExecutionTime;
 		if(timeBeforeNextExecution < 0) {

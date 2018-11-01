@@ -18,7 +18,7 @@ public class Job {
 	private volatile int executionsCount;
 	private Long lastExecutionTimeInMillis;
 	private final String name;
-	private final Schedule schedule;
+	private Schedule schedule;
 	private final Runnable runnable;
 
 	// public API
@@ -82,6 +82,10 @@ public class Job {
 	Job lastExecutionTimeInMillis(Long lastExecutionTimeInMillis) {
 		this.lastExecutionTimeInMillis = lastExecutionTimeInMillis;
 		return this;
+	}
+
+	void schedule(Schedule schedule) {
+		this.schedule = schedule;
 	}
 
 	// toString
