@@ -6,12 +6,12 @@ import com.coreoz.wisp.time.SystemTimeProvider;
 import com.coreoz.wisp.time.TimeProvider;
 
 import lombok.Builder;
-import lombok.Value;
+import lombok.Getter;
 
 /**
  * The configuration used by the scheduler
  */
-@Value
+@Getter
 @Builder
 public class SchedulerConfig {
 
