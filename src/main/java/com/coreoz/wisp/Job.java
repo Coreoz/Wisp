@@ -13,7 +13,7 @@ import com.coreoz.wisp.schedule.Schedule;
  */
 public class Job {
 
-	private volatile JobStatus status;
+	private JobStatus status;
 	private volatile long nextExecutionTimeInMillis;
 	private volatile int executionsCount;
 	private Long lastExecutionTimeInMillis;

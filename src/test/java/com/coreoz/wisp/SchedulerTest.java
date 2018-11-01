@@ -102,13 +102,19 @@ public class SchedulerTest {
 			stats.getThreadPoolStats().getActiveThreads()
 			+ stats.getThreadPoolStats().getIdleThreads()
 		)
-		.isEqualTo(1);
+		// 1 thread for the launcher + 1 thread for the tasks
+		.isLessThanOrEqualTo(2);
 	}
 
 	@Test
 	public void should_not_run_early_job() throws InterruptedException {
 		SystemTimeProvider timeProvider = new SystemTimeProvider();
-		Scheduler scheduler = new Scheduler(1, 10, timeProvider);
+		Scheduler scheduler = new Scheduler(SchedulerConfig
+			.builder()
+			.maxThreads(1)
+			.timeProvider(timeProvider)
+			.build()
+		);
 		SingleJob job1 = new SingleJob();
 		long beforeExecutionTime = timeProvider.currentTime();
 		Duration jobIntervalTime = Duration.ofMillis(40);
@@ -151,7 +157,7 @@ public class SchedulerTest {
 
 	@Test
 	public void should_shutdown_instantly_if_no_job_is_running__races_test() {
-		for(int i=0; i<100; i++) {
+		for(int i=0; i<10000; i++) {
 			should_shutdown_instantly_if_no_job_is_running();
 		}
 	}
@@ -167,30 +173,6 @@ public class SchedulerTest {
 		scheduler.gracefullyShutdown();
 
 		assertThat(System.currentTimeMillis() - beforeShutdownTime).isLessThan(Duration.ofSeconds(5).toMillis());
-	}
-
-	@Test
-	public void should_not_create_more_threads_than_necessary_on_startup__races_test() {
-		for(int i=0; i<100; i++) {
-			should_not_create_more_threads_than_necessary_on_startup();
-		}
-	}
-
-	@Test
-	public void should_not_create_more_threads_than_necessary_on_startup() {
-		Scheduler scheduler = new Scheduler();
-
-		scheduler.schedule("job1", () -> {}, Schedules.executeOnce(Schedules.fixedDelaySchedule(Duration.ofSeconds(60))));
-		scheduler.schedule("job2", () -> {}, Schedules.executeOnce(Schedules.fixedDelaySchedule(Duration.ofSeconds(20))));
-
-		SchedulerStats stats = scheduler.stats();
-		scheduler.gracefullyShutdown();
-
-		assertThat(
-			stats.getThreadPoolStats().getActiveThreads()
-			+ stats.getThreadPoolStats().getIdleThreads()
-		)
-		.isEqualTo(1);
 	}
 
 	@Test
@@ -229,7 +211,8 @@ public class SchedulerTest {
 			stats.getThreadPoolStats().getActiveThreads()
 			+ stats.getThreadPoolStats().getIdleThreads()
 		)
-		.isLessThanOrEqualTo(2);
+		// 1 thread for the launcher + 1 thread for each task
+		.isLessThanOrEqualTo(3);
 	}
 
 	@Test
@@ -242,7 +225,7 @@ public class SchedulerTest {
 
 	@Test
 	public void exception_in_schedule_should_not_alter_scheduler() throws InterruptedException {
-		Scheduler scheduler = new Scheduler(1, 0);
+		Scheduler scheduler = new Scheduler(SchedulerConfig.builder().maxThreads(1).build());
 
 		AtomicBoolean isJob1ExecutedAfterJob2 = new AtomicBoolean(false);
 		SingleJob job2 = new SingleJob();
@@ -284,7 +267,7 @@ public class SchedulerTest {
 
 	@Test
 	public void cancel_should_throw_IllegalArgumentException_if_the_job_name_does_not_exist() {
-		Scheduler scheduler = new Scheduler(1, 0);
+		Scheduler scheduler = new Scheduler(SchedulerConfig.builder().maxThreads(1).build());
 		try {
 			scheduler.cancel("job that does not exist");
 			fail("Should not accept to cancel a job that does not exist");
@@ -296,7 +279,7 @@ public class SchedulerTest {
 
 	@Test
 	public void cancel_should_returned_a_job_with_the_done_status() throws Exception {
-		Scheduler scheduler = new Scheduler(1, 0);
+		Scheduler scheduler = new Scheduler(SchedulerConfig.builder().maxThreads(1).build());
 		scheduler.schedule("doNothing", Runnables.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(100)));
 		Job job = scheduler.cancel("doNothing").toCompletableFuture().get(1, TimeUnit.SECONDS);
 
@@ -313,14 +296,14 @@ public class SchedulerTest {
 
 	@Test
 	public void cancelled_job_should_be_schedulable_again() throws Exception {
-		Scheduler scheduler = new Scheduler(1, 0);
+		Scheduler scheduler = new Scheduler(SchedulerConfig.builder().maxThreads(1).build());
 		scheduler.schedule("doNothing", Runnables.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(100)));
 		scheduler.cancel("doNothing").toCompletableFuture().get(1, TimeUnit.SECONDS);
 
 		Job job = scheduler.schedule("doNothing", Runnables.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(100)));
 
 		assertThat(job).isNotNull();
-		assertThat(job.status()).isEqualTo(JobStatus.READY);
+		assertThat(job.status()).isEqualTo(JobStatus.SCHEDULED);
 		assertThat(job.name()).isEqualTo("doNothing");
 		assertThat(job.runnable()).isSameAs(Runnables.doNothing());
 
@@ -330,7 +313,7 @@ public class SchedulerTest {
 	@Test
 	public void cancelling_a_job_should_wait_until_it_is_terminated_and_other_jobs_should_continue_running()
 			throws InterruptedException, ExecutionException, TimeoutException {
-		Scheduler scheduler = new Scheduler(1, 5);
+		Scheduler scheduler = new Scheduler(SchedulerConfig.builder().maxThreads(1).build());
 
 		SingleJob jobProcess1 = new SingleJob();
 		SingleJob jobProcess2 = new SingleJob() {

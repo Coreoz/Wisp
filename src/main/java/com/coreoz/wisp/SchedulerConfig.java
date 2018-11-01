@@ -13,10 +13,10 @@ import lombok.Value;
  */
 @Value
 @Builder
-public class SchedulerConfiguration {
+public class SchedulerConfig {
 
 	private static final TimeProvider DEFAULT_TIME_PROVIDER = new SystemTimeProvider();
-	private static final Duration NON_EXPIRABLE_THREADS = Duration.ofSeconds(Long.MAX_VALUE);
+	private static final Duration NON_EXPIRABLE_THREADS = Duration.ofMillis(Long.MAX_VALUE);
 
 	/**
 	 * The minimum number of threads that will live in the jobs threads pool.
