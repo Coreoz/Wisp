@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import com.coreoz.wisp.schedule.Schedules;
 import com.coreoz.wisp.stats.SchedulerStats;
 import com.coreoz.wisp.time.SystemTimeProvider;
-import com.google.common.util.concurrent.Runnables;
 
 public class SchedulerTest {
 
@@ -280,14 +279,14 @@ public class SchedulerTest {
 	@Test
 	public void cancel_should_returned_a_job_with_the_done_status() throws Exception {
 		Scheduler scheduler = new Scheduler(SchedulerConfig.builder().maxThreads(1).build());
-		scheduler.schedule("doNothing", Runnables.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(100)));
+		scheduler.schedule("doNothing", doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(100)));
 		Job job = scheduler.cancel("doNothing").toCompletableFuture().get(1, TimeUnit.SECONDS);
 
 		assertThat(job).isNotNull();
 		assertThat(job.status()).isEqualTo(JobStatus.DONE);
 		assertThat(scheduler.jobStatus().isEmpty()).isTrue();
 		assertThat(job.name()).isEqualTo("doNothing");
-		assertThat(job.runnable()).isSameAs(Runnables.doNothing());
+		assertThat(job.runnable()).isSameAs(doNothing());
 
 		scheduler.gracefullyShutdown();
 
@@ -297,15 +296,15 @@ public class SchedulerTest {
 	@Test
 	public void cancelled_job_should_be_schedulable_again() throws Exception {
 		Scheduler scheduler = new Scheduler(SchedulerConfig.builder().maxThreads(1).build());
-		scheduler.schedule("doNothing", Runnables.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(100)));
+		scheduler.schedule("doNothing", doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(100)));
 		scheduler.cancel("doNothing").toCompletableFuture().get(1, TimeUnit.SECONDS);
 
-		Job job = scheduler.schedule("doNothing", Runnables.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(100)));
+		Job job = scheduler.schedule("doNothing", doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(100)));
 
 		assertThat(job).isNotNull();
 		assertThat(job.status()).isEqualTo(JobStatus.SCHEDULED);
 		assertThat(job.name()).isEqualTo("doNothing");
-		assertThat(job.runnable()).isSameAs(Runnables.doNothing());
+		assertThat(job.runnable()).isSameAs(doNothing());
 
 		scheduler.gracefullyShutdown();
 	}
@@ -383,6 +382,12 @@ public class SchedulerTest {
 			}
 			currentTime = System.currentTimeMillis();
 		}
+	}
+
+	// a do nothing runnable
+	private static Runnable doNothing = () -> {};
+	private static Runnable doNothing() {
+		return doNothing;
 	}
 
 }
