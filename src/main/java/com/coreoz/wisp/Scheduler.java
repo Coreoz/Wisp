@@ -61,16 +61,38 @@ public final class Scheduler {
 
 	// constructors
 
+	/**
+	 * Create a scheduler with the defaults defined at {@link SchedulerConfig}
+	 */
 	public Scheduler() {
 		this(SchedulerConfig.builder().build());
 	}
 
+	/**
+	 * Create a scheduler with the defaults defined at {@link SchedulerConfig}
+	 * and with a max number of worker threads
+	 * @param maxThreads The maximum number of worker threads that can be created for the scheduler.
+	 * Note that the limit of threads will actually be maxThreads + 1,
+	 * because one thread is reserved for the scheduler internals.
+	 * @throws IllegalArgumentException if {@code maxThreads <= 0}
+	 */
 	public Scheduler(int maxThreads) {
 		this(SchedulerConfig.builder().maxThreads(maxThreads).build());
 	}
 
+	/**
+	 * Create a scheduler according to the configuration
+	 * @throws IllegalArgumentException if one of the following holds:<br>
+     * {@code SchedulerConfig#getMinThreads() < 0}<br>
+     * {@code SchedulerConfig#getThreadsKeepAliveTime() < 0}<br>
+     * {@code SchedulerConfig#getMaxThreads() <= 0}<br>
+     * {@code SchedulerConfig#getMaxThreads() < SchedulerConfig#getMinThreads()}
+     * @throws NullPointerException if {@code SchedulerConfig#getTimeProvider()} is null
+	 */
 	public Scheduler(SchedulerConfig config) {
-		// TODO: validate conf
+		if(config.getTimeProvider() == null) {
+			throw new NullPointerException("The timeProvider cannot be null");
+		}
 
 		this.indexedJobsByName = new ConcurrentHashMap<>();
 		this.nextExecutionsOrder = new ArrayList<>();
@@ -95,8 +117,8 @@ public final class Scheduler {
 	 * It will be deleted in version 2.0.0.
 	 */
 	@Deprecated
-	public Scheduler(int nbThreads, long minimumDelayInMillisToReplaceJob) {
-		this(nbThreads, minimumDelayInMillisToReplaceJob, new SystemTimeProvider());
+	public Scheduler(int maxThreads, long minimumDelayInMillisToReplaceJob) {
+		this(maxThreads, minimumDelayInMillisToReplaceJob, new SystemTimeProvider());
 	}
 
 	/**
@@ -104,11 +126,11 @@ public final class Scheduler {
 	 * It will be deleted in version 2.0.0.
 	 */
 	@Deprecated
-	public Scheduler(int nbThreads, long minimumDelayInMillisToReplaceJob,
+	public Scheduler(int maxThreads, long minimumDelayInMillisToReplaceJob,
 			TimeProvider timeProvider) {
 		this(SchedulerConfig
 			.builder()
-			.maxThreads(nbThreads)
+			.maxThreads(maxThreads)
 			.timeProvider(timeProvider)
 			.build()
 		);

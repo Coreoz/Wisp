@@ -24,11 +24,13 @@ public class SchedulerConfig {
 	@Builder.Default private final int minThreads = 0;
 	/**
 	 * The maximum number of threads that will live in the jobs threads pool.
+	 * Note that the limit of threads will actually be maxThreads + 1,
+	 * because one thread is reserved for the scheduler internals.
 	 */
 	@Builder.Default private final int maxThreads = 10;
 	/**
-	 * If the number of threads in greater than {@link #minThreads},
-	 * the time after which an idle thread will be removed from the threads pool.
+	 * If the number of created threads in greater than {@link #minThreads},
+	 * the time after which idle threads will be removed from the threads pool.
 	 */
 	@Builder.Default private final Duration threadsKeepAliveTime = NON_EXPIRABLE_THREADS;
 	/**
