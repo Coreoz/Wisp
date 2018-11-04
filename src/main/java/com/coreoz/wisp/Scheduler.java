@@ -385,6 +385,7 @@ public final class Scheduler {
 					}
 
 					Job jobToRun = nextExecutionsOrder.remove(0);
+					jobToRun.status(JobStatus.RUNNING);
 					threadPoolExecutor.execute(() -> runJob(jobToRun));
 				}
 			}
@@ -392,7 +393,6 @@ public final class Scheduler {
 	}
 
 	private void runJob(Job jobToRun) {
-		jobToRun.status(JobStatus.RUNNING);
 		long startExecutionTime = timeProvider.currentTime();
 		long timeBeforeNextExecution = jobToRun.nextExecutionTimeInMillis() - startExecutionTime;
 		if(timeBeforeNextExecution < 0) {
