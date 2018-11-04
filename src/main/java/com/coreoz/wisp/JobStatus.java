@@ -6,11 +6,11 @@ package com.coreoz.wisp;
 public enum JobStatus {
 
 	/**
-	 * the job will not be run ever again
+	 * The job will not be run ever again
 	 */
 	DONE,
 	/**
-	 * the job will be executed
+	 * The job will be executed at his scheduled time
 	 */
 	SCHEDULED,
 	/**
@@ -19,7 +19,7 @@ public enum JobStatus {
 	@Deprecated
 	READY,
 	/**
-	 * the job is currently running
+	 * The job is currently running
 	 */
 	RUNNING,
 

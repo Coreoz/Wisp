@@ -94,7 +94,7 @@ public final class Scheduler {
      * {@code SchedulerConfig#getThreadsKeepAliveTime() < 0}<br>
      * {@code SchedulerConfig#getMaxThreads() <= 0}<br>
      * {@code SchedulerConfig#getMaxThreads() < SchedulerConfig#getMinThreads()}
-     * @throws NullPointerException if {@code SchedulerConfig#getTimeProvider()} is null
+     * @throws NullPointerException if {@code SchedulerConfig#getTimeProvider()} is {@code null}
 	 */
 	public Scheduler(SchedulerConfig config) {
 		if(config.getTimeProvider() == null) {
@@ -123,6 +123,7 @@ public final class Scheduler {
 	/**
 	 * @deprecated Use {@link #Scheduler(SchedulerConfig)} to specify multiple configuration values.
 	 * It will be deleted in version 2.0.0.
+	 * @throws IllegalArgumentException if {@code maxThreads <= 0}
 	 */
 	@Deprecated
 	public Scheduler(int maxThreads, long minimumDelayInMillisToReplaceJob) {
@@ -132,6 +133,8 @@ public final class Scheduler {
 	/**
 	 * @deprecated Use {@link #Scheduler(SchedulerConfig)} to specify multiple configuration values.
 	 * It will be deleted in version 2.0.0.
+	 * @throws IllegalArgumentException if {@code maxThreads <= 0}
+	 * @throws NullPointerException if {@code timeProvider} is {@code null}
 	 */
 	@Deprecated
 	public Scheduler(int maxThreads, long minimumDelayInMillisToReplaceJob,
@@ -152,6 +155,9 @@ public final class Scheduler {
 	 * @param runnable The process to be executed at a schedule
 	 * @param when The {@link Schedule} at which the process will be executed
 	 * @return The corresponding {@link Job} created.
+	 * @throws NullPointerException if {@code runnable} or {@code when} are {@code null}
+	 * @throws IllegalArgumentException if the same instance of {@code runnable} is
+	 * scheduled twice whereas the corresponding job status is not {@link JobStatus#DONE}
 	 */
 	public Job schedule(Runnable runnable, Schedule when) {
 		return schedule(null, runnable, when);
@@ -164,6 +170,9 @@ public final class Scheduler {
 	 * @param runnable The process to be executed at a schedule
 	 * @param when The {@link Schedule} at which the process will be executed
 	 * @return The corresponding {@link Job} created.
+	 * @throws NullPointerException if {@code runnable} or {@code when} are {@code null}
+	 * @throws IllegalArgumentException if the same {@code nullableName} is
+	 * scheduled twice whereas the corresponding job status is not {@link JobStatus#DONE}
 	 */
 	public Job schedule(String nullableName, Runnable runnable, Schedule when) {
 		Objects.requireNonNull(runnable, "Runnable must not be null");
@@ -195,6 +204,7 @@ public final class Scheduler {
 
 	/**
 	 * Fetch the status of all the jobs that has been registered on the {@code Scheduler}
+	 * including the {@link JobStatus#DONE} jobs
 	 */
 	public Collection<Job> jobStatus() {
 		return indexedJobsByName.values();
