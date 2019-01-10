@@ -29,7 +29,8 @@ public class SchedulerConfig {
 	 */
 	@Builder.Default private final int maxThreads = 10;
 	/**
-	 * The time after which idle threads will be removed from the threads pool
+	 * The time after which idle threads will be removed from the threads pool.
+	 * By default the thread pool does not scale down (duration = infinity ~ {@link Long#MAX_VALUE}ms)
 	 */
 	@Builder.Default private final Duration threadsKeepAliveTime = NON_EXPIRABLE_THREADS;
 	/**

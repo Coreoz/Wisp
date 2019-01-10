@@ -182,22 +182,7 @@ public class SchedulerTest {
 	public void should_not_create_more_threads_than_jobs_scheduled_over_time() throws InterruptedException {
 		Scheduler scheduler = new Scheduler();
 
-		SingleJob job1 = new SingleJob();
-		SingleJob job2 = new SingleJob();
-
-		scheduler.schedule("job1", job1, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
-		scheduler.schedule("job2", job2, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
-
-		Thread thread1 = new Thread(() -> {
-			waitOn(job1, () -> job1.countExecuted.get() > 50, 100);
-		});
-		thread1.start();
-		thread1.join();
-		Thread thread2 = new Thread(() -> {
-			waitOn(job2, () -> job2.countExecuted.get() > 50, 100);
-		});
-		thread2.start();
-		thread2.join();
+		runTwoConcurrentJobsForAtLeastFiftyIterations(scheduler);
 
 		SchedulerStats stats = scheduler.stats();
 		scheduler.gracefullyShutdown();
@@ -206,8 +191,11 @@ public class SchedulerTest {
 			stats.getThreadPoolStats().getActiveThreads()
 			+ stats.getThreadPoolStats().getIdleThreads()
 		)
-		// 1 thread for the launcher + 1 thread for each task
-		.isLessThanOrEqualTo(3);
+		// 1 thread for the launcher + 1 thread for each task => 3
+		// but since most of the thread pool logic is delegated to ThreadPoolExecutor
+		// we do not have precise control on how much threads will be created.
+		// So we mostly want to check that not all threads of the pool are created.
+		.isLessThanOrEqualTo(6);
 	}
 
 	@Test
@@ -216,6 +204,31 @@ public class SchedulerTest {
 		for(int i=0; i<1000; i++) {
 			exception_in_schedule_should_not_alter_scheduler();
 		}
+	}
+
+	@Test
+	public void thread_pool_should_scale_down_when_no_more_tasks_need_executing() throws InterruptedException {
+		Scheduler scheduler = new Scheduler(
+			SchedulerConfig
+				.builder()
+				.threadsKeepAliveTime(Duration.ofMillis(50))
+				.build()
+		);
+
+		runTwoConcurrentJobsForAtLeastFiftyIterations(scheduler);
+		scheduler.cancel("job1");
+		scheduler.cancel("job2");
+
+		Thread.sleep(60L);
+		SchedulerStats stats = scheduler.stats();
+		scheduler.gracefullyShutdown();
+
+		assertThat(
+			stats.getThreadPoolStats().getActiveThreads()
+			+ stats.getThreadPoolStats().getIdleThreads()
+		)
+		// 1 thread for the launcher
+		.isLessThanOrEqualTo(1);
 	}
 
 	@Test
@@ -239,7 +252,7 @@ public class SchedulerTest {
 			if(executionsCount == 0) {
 				return currentTimeInMillis;
 			}
-			throw new RuntimeException();
+			throw new RuntimeException("Expected exception");
 		});
 
 		Thread thread1 = new Thread(() -> {
@@ -258,5 +271,24 @@ public class SchedulerTest {
 		assertThat(isJob1ExecutedAfterJob2.get()).isTrue();
 	}
 
-}
+	private void runTwoConcurrentJobsForAtLeastFiftyIterations(Scheduler scheduler)
+			throws InterruptedException {
+		SingleJob job1 = new SingleJob();
+		SingleJob job2 = new SingleJob();
 
+		scheduler.schedule("job1", job1, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		scheduler.schedule("job2", job2, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+
+		Thread thread1 = new Thread(() -> {
+			waitOn(job1, () -> job1.countExecuted.get() > 50, 100);
+		});
+		thread1.start();
+		thread1.join();
+		Thread thread2 = new Thread(() -> {
+			waitOn(job2, () -> job2.countExecuted.get() > 50, 100);
+		});
+		thread2.start();
+		thread2.join();
+	}
+
+}

@@ -83,15 +83,11 @@ public class SchedulerCancelTest {
 		};
 
 		Job job1 = scheduler.schedule(jobProcess1, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
-		Job job2 = scheduler.schedule(jobProcess2, Schedules.afterInitialDelay(
-			Schedules.fixedDelaySchedule(Duration.ofMillis(1)),
-			Duration.ofMillis(5)
-		));
+		Job job2 = scheduler.schedule(jobProcess2, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
 
 		Thread.sleep(10);
 
 		int job1ExecutionsCount = job1.executionsCount();
-		assertThat(job1ExecutionsCount).isGreaterThan(0);
 		assertThat(job2.executionsCount()).isEqualTo(0);
 
 		scheduler.cancel(job2.name()).toCompletableFuture().get(1, TimeUnit.SECONDS);

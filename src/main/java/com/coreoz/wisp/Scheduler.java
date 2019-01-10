@@ -194,7 +194,9 @@ public final class Scheduler {
 		}
 
 		logger.info("Scheduling job '{}' to run {}", job.name(), job.schedule());
-		scheduleNextExecution(job);
+		synchronized (this) {
+			scheduleNextExecution(job);
+		}
 
 		return job;
 	}
@@ -402,10 +404,12 @@ public final class Scheduler {
 						return;
 					}
 
-					Job jobToRun = nextExecutionsOrder.remove(0);
-					jobToRun.status(JobStatus.READY);
-					jobToRun.runningJob(() -> runJob(jobToRun));
-					threadPoolExecutor.execute(jobToRun.runningJob());
+					if(nextExecutionsOrder.size() > 0) {
+						Job jobToRun = nextExecutionsOrder.remove(0);
+						jobToRun.status(JobStatus.READY);
+						jobToRun.runningJob(() -> runJob(jobToRun));
+						threadPoolExecutor.execute(jobToRun.runningJob());
+					}
 				}
 			}
 		}
@@ -443,7 +447,9 @@ public final class Scheduler {
 		if(shuttingDown) {
 			return;
 		}
-		scheduleNextExecution(jobToRun);
+		synchronized (this) {
+			scheduleNextExecution(jobToRun);
+		}
 	}
 
 	private static class WispThreadFactory implements ThreadFactory {
