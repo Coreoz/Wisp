@@ -14,9 +14,12 @@ public enum JobStatus {
 	 */
 	SCHEDULED,
 	/**
-	 * @deprecated This status is not used anymore. It will be deleted in version 2.0.0.
+	 * This is an intermediate status before {@link #RUNNING},
+	 * it means that the job is placed on the thread pool executor
+	 * and is waiting to be executed as soon as a thread is available.
+	 * This status should not last more than a few µs/ms except if the
+	 * thread pool is full and running tasks are not terminating.
 	 */
-	@Deprecated
 	READY,
 	/**
 	 * The job is currently running

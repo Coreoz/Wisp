@@ -106,9 +106,39 @@ public class SchedulerCancelTest {
 	}
 
 	@Test
+	public void a_job_should_be_cancelled_immediatly_if_it_has_the_status_ready() throws InterruptedException, ExecutionException, TimeoutException {
+		Scheduler scheduler = new Scheduler(SchedulerConfig.builder().maxThreads(1).build());
+
+		SingleJob jobProcess1 = new SingleJob();
+		SingleJob jobProcess2 = new SingleJob() {
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(300);
+					super.run();
+				} catch (InterruptedException e) {
+					throw new RuntimeException("Should not be interrupted", e);
+				}
+			}
+		};
+
+		Job job1 = scheduler.schedule("Job 1", jobProcess1, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		scheduler.schedule("Job 2", jobProcess2, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+
+		Thread.sleep(30);
+		assertThat(job1.status()).isEqualTo(JobStatus.READY);
+
+		long timeBeforeCancel = System.currentTimeMillis();
+		scheduler.cancel(job1.name()).toCompletableFuture().get(1, TimeUnit.SECONDS);
+		assertThat(timeBeforeCancel - System.currentTimeMillis()).isLessThan(50L);
+
+		scheduler.gracefullyShutdown();
+	}
+
+	@Test
 	public void cancelling_a_job_should_wait_until_it_is_terminated_and_other_jobs_should_continue_running__races_test()
 			throws Exception {
-		for(int i=0; i<5; i++) {
+		for(int i=0; i<10; i++) {
 			cancelling_a_job_should_wait_until_it_is_terminated_and_other_jobs_should_continue_running();
 		}
 	}

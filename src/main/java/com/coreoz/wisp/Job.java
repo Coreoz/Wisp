@@ -20,6 +20,7 @@ public class Job {
 	private final String name;
 	private Schedule schedule;
 	private final Runnable runnable;
+	private Runnable runningJob;
 
 	// public API
 
@@ -86,6 +87,14 @@ public class Job {
 
 	void schedule(Schedule schedule) {
 		this.schedule = schedule;
+	}
+
+	void runningJob(Runnable runningJob) {
+		this.runningJob = runningJob;
+	}
+
+	Runnable runningJob() {
+		return runningJob;
 	}
 
 	// toString

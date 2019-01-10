@@ -11,7 +11,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -40,7 +40,6 @@ public final class Scheduler {
 	private static final Logger logger = LoggerFactory.getLogger(Scheduler.class);
 
 	private static final AtomicInteger threadCounter = new AtomicInteger(1);
-	private static final Schedule willNeverBeExecuted = (c, e, l) -> Schedule.WILL_NOT_BE_EXECUTED_AGAIN;
 
 	/**
 	 * @deprecated Default values are available in {@link SchedulerConfig}
@@ -106,18 +105,16 @@ public final class Scheduler {
 		this.timeProvider = config.getTimeProvider();
 		this.launcherNotifier = new Object();
 		this.cancelHandles = new ConcurrentHashMap<>();
-		this.threadPoolExecutor = new ThreadPoolExecutor(
+		Executors.newCachedThreadPool(new WispThreadFactory());
+		this.threadPoolExecutor = new ScalingThreadPoolExecutor(
 			config.getMinThreads(),
 			// +1 is to include the job launcher thread
 			config.getMaxThreads() + 1,
 			config.getThreadsKeepAliveTime().toMillis(),
 			TimeUnit.MILLISECONDS,
-			new LinkedBlockingQueue<>(),
 			new WispThreadFactory()
 		);
-		if(config.getMinThreads() > 0) {
-			this.threadPoolExecutor.prestartAllCoreThreads();
-		}
+		threadPoolExecutor.execute(this::launcher);
 	}
 
 	/**
@@ -244,8 +241,16 @@ public final class Scheduler {
 				return existingHandle;
 			}
 
-			job.schedule(willNeverBeExecuted);
-			if(job.status() == JobStatus.RUNNING) {
+			job.schedule(Schedule.willNeverBeExecuted);
+			if(job.status() == JobStatus.READY && threadPoolExecutor.remove(job.runningJob())) {
+				scheduleNextExecution(job);
+				return CompletableFuture.completedFuture(job);
+			}
+
+			if(job.status() == JobStatus.RUNNING
+				// if the job status is/was READY but could not be removed from the thread pool,
+				// then we have to wait for it to finish
+				|| job.status() == JobStatus.READY) {
 				CompletableFuture<Job> promise = new CompletableFuture<>();
 				cancelHandles.put(jobName, promise);
 				return promise;
@@ -292,12 +297,20 @@ public final class Scheduler {
 
 		synchronized (this) {
 			shuttingDown = true;
-			synchronized (launcherNotifier) {
-				launcherNotifier.notify();
-			}
+			threadPoolExecutor.shutdown();
 		}
 
-		threadPoolExecutor.shutdown();
+		// stops jobs that have not yet started to be executed
+		for(Job job : jobStatus()) {
+			Runnable runningJob = job.runningJob();
+			if(runningJob != null) {
+				threadPoolExecutor.remove(runningJob);
+			}
+		}
+		synchronized (launcherNotifier) {
+			launcherNotifier.notify();
+		}
+
 		threadPoolExecutor.awaitTermination(timeout.toMillis(), TimeUnit.MILLISECONDS);
 	}
 
@@ -315,8 +328,11 @@ public final class Scheduler {
 	// internal
 
 	private synchronized void scheduleNextExecution(Job job) {
-		long currentTimeInMillis = timeProvider.currentTime();
+		// clean up
+		job.runningJob(null);
 
+		// next execution time calculation
+		long currentTimeInMillis = timeProvider.currentTime();
 		try {
 			job.nextExecutionTimeInMillis(
 				job.schedule().nextExecutionInMillis(
@@ -333,6 +349,7 @@ public final class Scheduler {
 			job.nextExecutionTimeInMillis(Schedule.WILL_NOT_BE_EXECUTED_AGAIN);
 		}
 
+		// next execution planning
 		if(job.nextExecutionTimeInMillis() >= currentTimeInMillis) {
 			job.status(JobStatus.SCHEDULED);
 			nextExecutionsOrder.add(job);
@@ -340,14 +357,8 @@ public final class Scheduler {
 				Job::nextExecutionTimeInMillis
 			));
 
-			if(nextExecutionsOrder.size() == 1) {
-				if(!shuttingDown) {
-					threadPoolExecutor.execute(this::launcher);
-				}
-			} else {
-				synchronized (launcherNotifier) {
-					launcherNotifier.notify();
-				}
+			synchronized (launcherNotifier) {
+				launcherNotifier.notify();
 			}
 		} else {
 			job.status(JobStatus.DONE);
@@ -359,24 +370,31 @@ public final class Scheduler {
 		}
 	}
 
+	/**
+	 * The daemon that will be in charge of placing the jobs in the thread pool
+	 * when they are ready to be executed.
+	 */
 	@SneakyThrows
 	private void launcher() {
 		while(!shuttingDown) {
-			long timeBeforeNextExecution = 0L;
+			Long timeBeforeNextExecution = null;
 			synchronized (this) {
-				if(nextExecutionsOrder.isEmpty()) {
-					return;
+				if(nextExecutionsOrder.size() > 0) {
+					timeBeforeNextExecution = nextExecutionsOrder.get(0).nextExecutionTimeInMillis()
+						- timeProvider.currentTime();
 				}
-				timeBeforeNextExecution = nextExecutionsOrder.get(0).nextExecutionTimeInMillis()
-					- timeProvider.currentTime();
 			}
 
-			if(timeBeforeNextExecution > 0L) {
+			if(timeBeforeNextExecution == null || timeBeforeNextExecution > 0L) {
 				synchronized (launcherNotifier) {
 					if(shuttingDown) {
 						return;
 					}
-					launcherNotifier.wait(timeBeforeNextExecution);
+					if(timeBeforeNextExecution == null) {
+						launcherNotifier.wait();
+					} else {
+						launcherNotifier.wait(timeBeforeNextExecution);
+					}
 				}
 			} else {
 				synchronized (this) {
@@ -385,19 +403,27 @@ public final class Scheduler {
 					}
 
 					Job jobToRun = nextExecutionsOrder.remove(0);
-					jobToRun.status(JobStatus.RUNNING);
-					threadPoolExecutor.execute(() -> runJob(jobToRun));
+					jobToRun.status(JobStatus.READY);
+					jobToRun.runningJob(() -> runJob(jobToRun));
+					threadPoolExecutor.execute(jobToRun.runningJob());
 				}
 			}
 		}
 	}
 
+	/**
+	 * The wrapper around a job that will be executed in the thread pool.
+	 * It is especially in charge of logging, changing the job status
+	 * and checking for the next job to be executed.
+	 * @param jobToRun the job to execute
+	 */
 	private void runJob(Job jobToRun) {
 		long startExecutionTime = timeProvider.currentTime();
 		long timeBeforeNextExecution = jobToRun.nextExecutionTimeInMillis() - startExecutionTime;
 		if(timeBeforeNextExecution < 0) {
 			logger.debug("Job '{}' execution is {}ms late", jobToRun.name(), -timeBeforeNextExecution);
 		}
+		jobToRun.status(JobStatus.RUNNING);
 
 		try {
 			jobToRun.runnable().run();

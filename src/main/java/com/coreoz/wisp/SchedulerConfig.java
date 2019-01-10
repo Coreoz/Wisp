@@ -29,8 +29,7 @@ public class SchedulerConfig {
 	 */
 	@Builder.Default private final int maxThreads = 10;
 	/**
-	 * If the number of created threads in greater than {@link #minThreads},
-	 * the time after which idle threads will be removed from the threads pool.
+	 * The time after which idle threads will be removed from the threads pool
 	 */
 	@Builder.Default private final Duration threadsKeepAliveTime = NON_EXPIRABLE_THREADS;
 	/**
