@@ -21,7 +21,7 @@ import java.util.concurrent.TransferQueue;
  */
 final class ScalingThreadPoolExecutor extends ThreadPoolExecutor {
 
-	public ScalingThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime,
+	ScalingThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime,
 			TimeUnit keepAliveUnit, ThreadFactory threadFactory) {
 		super(corePoolSize, maximumPoolSize, keepAliveTime, keepAliveUnit,
 				new DynamicBlockingQueue<>(new LinkedTransferQueue<Runnable>()), threadFactory, new ForceQueuePolicy());
@@ -33,7 +33,6 @@ final class ScalingThreadPoolExecutor extends ThreadPoolExecutor {
 	}
 
 	private static class ForceQueuePolicy implements RejectedExecutionHandler {
-
 		@Override
 		public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
 			try {
@@ -47,7 +46,6 @@ final class ScalingThreadPoolExecutor extends ThreadPoolExecutor {
 	}
 
 	private static class DynamicBlockingQueue<E> implements TransferQueue<E> {
-
 		private final TransferQueue<E> delegate;
 
 		public DynamicBlockingQueue(final TransferQueue<E> delegate) {
@@ -61,7 +59,6 @@ final class ScalingThreadPoolExecutor extends ThreadPoolExecutor {
 
 		@Override
 		public boolean add(E o) {
-
 			if (this.delegate.add(o)) {
 				return true;
 			} else {// Not possible in our case

@@ -2,6 +2,7 @@ package com.coreoz.wisp;
 
 import static com.coreoz.wisp.Utils.waitOn;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -18,6 +19,21 @@ import com.coreoz.wisp.time.SystemTimeProvider;
 public class SchedulerTest {
 
 	private static final Logger logger = LoggerFactory.getLogger(SchedulerTest.class);
+
+	@Test
+	public void check_that_two_job_cannot_be_scheduled_with_the_same_name() {
+		Scheduler scheduler = new Scheduler();
+
+		scheduler.schedule("job", Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		try {
+			scheduler.schedule("job", Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+			fail();
+		} catch (IllegalArgumentException e) {
+			// as expected
+		}
+
+		scheduler.gracefullyShutdown();
+	}
 
 	@Test
 	public void should_run_a_single_job() throws InterruptedException {
@@ -283,6 +299,42 @@ public class SchedulerTest {
 		assertThat(job.executionsCount()).isGreaterThan(1);
 
 		scheduler.gracefullyShutdown();
+	}
+
+	@Test
+	public void check_that_a_scheduled_job_has_the_right_status() {
+		Scheduler scheduler = new Scheduler();
+
+		Job job = scheduler.schedule(Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofSeconds(1)));
+
+		assertThat(job.status()).isEqualTo(JobStatus.SCHEDULED);
+
+		scheduler.gracefullyShutdown();
+		assertThat(job.status()).isEqualTo(JobStatus.DONE);
+	}
+
+	@Test
+	public void check_that_a_running_job_has_the_right_status() throws InterruptedException {
+		Scheduler scheduler = new Scheduler();
+
+		Job job = scheduler.schedule(Utils.TASK_THAT_SLEEP_FOR_200MS, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		Thread.sleep(40L);
+		assertThat(job.status()).isEqualTo(JobStatus.RUNNING);
+		scheduler.gracefullyShutdown();
+		assertThat(job.status()).isEqualTo(JobStatus.DONE);
+	}
+
+	@Test
+	public void check_that_a_long_running_job_does_not_prevent_other_job_to_run() throws InterruptedException {
+		Scheduler scheduler = new Scheduler();
+
+		scheduler.schedule(Utils.TASK_THAT_SLEEP_FOR_200MS, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		Thread.sleep(40L);
+		Job job = scheduler.schedule(Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		Thread.sleep(40L);
+		scheduler.gracefullyShutdown();
+
+		assertThat(job.executionsCount()).isGreaterThan(5);
 	}
 
 	private void runTwoConcurrentJobsForAtLeastFiftyIterations(Scheduler scheduler)

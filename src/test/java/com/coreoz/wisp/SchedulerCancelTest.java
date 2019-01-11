@@ -20,18 +20,6 @@ import com.coreoz.wisp.schedule.Schedules;
  */
 public class SchedulerCancelTest {
 
-	private static final SingleJob JOB_THAT_SLEEP_FOR_200MS = new SingleJob() {
-		@Override
-		public void run() {
-			try {
-				Thread.sleep(200);
-				super.run();
-			} catch (InterruptedException e) {
-				throw new RuntimeException("Should not be interrupted", e);
-			}
-		}
-	};
-
 	@Test
 	public void cancel_should_throw_IllegalArgumentException_if_the_job_name_does_not_exist() {
 		Scheduler scheduler = new Scheduler(SchedulerConfig.builder().maxThreads(1).build());
@@ -64,7 +52,10 @@ public class SchedulerCancelTest {
 	@Test
 	public void second_cancel_should_return_either_the_first_promise_or_either_a_completed_future() throws Exception {
 		Scheduler scheduler = new Scheduler(SchedulerConfig.builder().maxThreads(1).build());
-		scheduler.schedule("job", JOB_THAT_SLEEP_FOR_200MS, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		scheduler.schedule("job", Utils.TASK_THAT_SLEEP_FOR_200MS, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+
+		// so the job can start executing
+		Thread.sleep(20L);
 
 		CompletionStage<Job> cancelFuture = scheduler.cancel("job");
 		CompletionStage<Job> otherCancelFuture = scheduler.cancel("job");
@@ -100,7 +91,17 @@ public class SchedulerCancelTest {
 		Scheduler scheduler = new Scheduler(SchedulerConfig.builder().maxThreads(1).build());
 
 		SingleJob jobProcess1 = new SingleJob();
-		SingleJob jobProcess2 = JOB_THAT_SLEEP_FOR_200MS;
+		SingleJob jobProcess2 = new SingleJob() {
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(200);
+					super.run();
+				} catch (InterruptedException e) {
+					throw new RuntimeException("Should not be interrupted", e);
+				}
+			}
+		};
 
 		Job job1 = scheduler.schedule(jobProcess1, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
 		Job job2 = scheduler.schedule(jobProcess2, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));

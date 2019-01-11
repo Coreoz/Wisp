@@ -39,7 +39,7 @@ public final class Scheduler {
 
 	private static final Logger logger = LoggerFactory.getLogger(Scheduler.class);
 
-	private static final AtomicInteger threadCounter = new AtomicInteger(1);
+	private static final AtomicInteger threadCounter = new AtomicInteger(0);
 
 	/**
 	 * @deprecated Default values are available in {@link SchedulerConfig}
@@ -291,26 +291,25 @@ public final class Scheduler {
 	 */
 	@SneakyThrows
 	public void gracefullyShutdown(Duration timeout) {
-		if(shuttingDown) {
-			return;
-		}
-
 		logger.info("Shutting down...");
 
-		synchronized (this) {
-			shuttingDown = true;
-			threadPoolExecutor.shutdown();
-		}
-
-		// stops jobs that have not yet started to be executed
-		for(Job job : jobStatus()) {
-			Runnable runningJob = job.runningJob();
-			if(runningJob != null) {
-				threadPoolExecutor.remove(runningJob);
+		if(!shuttingDown) {
+			synchronized (this) {
+				shuttingDown = true;
+				threadPoolExecutor.shutdown();
 			}
-		}
-		synchronized (launcherNotifier) {
-			launcherNotifier.notify();
+
+			// stops jobs that have not yet started to be executed
+			for(Job job : jobStatus()) {
+				Runnable runningJob = job.runningJob();
+				if(runningJob != null) {
+					threadPoolExecutor.remove(runningJob);
+				}
+				job.status(JobStatus.DONE);
+			}
+			synchronized (launcherNotifier) {
+				launcherNotifier.notify();
+			}
 		}
 
 		threadPoolExecutor.awaitTermination(timeout.toMillis(), TimeUnit.MILLISECONDS);
@@ -378,6 +377,8 @@ public final class Scheduler {
 	 */
 	@SneakyThrows
 	private void launcher() {
+		Thread.currentThread().setName("Wisp Monitor");
+
 		while(!shuttingDown) {
 			Long timeBeforeNextExecution = null;
 			synchronized (this) {

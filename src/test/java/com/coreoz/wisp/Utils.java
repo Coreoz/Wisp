@@ -5,6 +5,14 @@ import java.util.function.Supplier;
 
 public class Utils {
 
+	public static final Runnable TASK_THAT_SLEEP_FOR_200MS = () -> {
+		try {
+			Thread.sleep(200);
+		} catch (InterruptedException e) {
+			throw new RuntimeException("Should not be interrupted", e);
+		}
+	};
+
 	public static class SingleJob implements Runnable {
 		AtomicInteger countExecuted = new AtomicInteger(0);
 
