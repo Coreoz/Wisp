@@ -328,13 +328,14 @@ public class SchedulerTest {
 	public void check_that_a_long_running_job_does_not_prevent_other_job_to_run() throws InterruptedException {
 		Scheduler scheduler = new Scheduler();
 
+		Job job = scheduler.schedule(Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(10)));
+		Thread.sleep(25L);
 		scheduler.schedule(Utils.TASK_THAT_SLEEP_FOR_200MS, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
-		Thread.sleep(40L);
-		Job job = scheduler.schedule(Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
-		Thread.sleep(40L);
+		long countBeforeSleep = job.executionsCount();
+		Thread.sleep(50L);
 		scheduler.gracefullyShutdown();
 
-		assertThat(job.executionsCount()).isGreaterThan(5);
+		assertThat(job.executionsCount() - countBeforeSleep).isGreaterThan(3);
 	}
 
 	private void runTwoConcurrentJobsForAtLeastFiftyIterations(Scheduler scheduler)
