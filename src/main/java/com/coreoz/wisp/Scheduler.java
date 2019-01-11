@@ -409,6 +409,12 @@ public final class Scheduler {
 						Job jobToRun = nextExecutionsOrder.remove(0);
 						jobToRun.status(JobStatus.READY);
 						jobToRun.runningJob(() -> runJob(jobToRun));
+						if(threadPoolExecutor.getActiveCount() == threadPoolExecutor.getMaximumPoolSize()) {
+							logger.warn(
+								"Job thread pool is full, either tasks take too much time to execute"
+								+ " or either the thread pool is too small"
+							);
+						}
 						threadPoolExecutor.execute(jobToRun.runningJob());
 					}
 				}
