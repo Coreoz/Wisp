@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 import java.time.Duration;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -18,6 +19,18 @@ import com.coreoz.wisp.schedule.Schedules;
  * Tests about {@link Scheduler#cancel(String)} only
  */
 public class SchedulerCancelTest {
+
+	private static final SingleJob JOB_THAT_SLEEP_FOR_200MS = new SingleJob() {
+		@Override
+		public void run() {
+			try {
+				Thread.sleep(200);
+				super.run();
+			} catch (InterruptedException e) {
+				throw new RuntimeException("Should not be interrupted", e);
+			}
+		}
+	};
 
 	@Test
 	public void cancel_should_throw_IllegalArgumentException_if_the_job_name_does_not_exist() {
@@ -49,6 +62,23 @@ public class SchedulerCancelTest {
 	}
 
 	@Test
+	public void second_cancel_should_return_either_the_first_promise_or_either_a_completed_future() throws Exception {
+		Scheduler scheduler = new Scheduler(SchedulerConfig.builder().maxThreads(1).build());
+		scheduler.schedule("job", JOB_THAT_SLEEP_FOR_200MS, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+
+		CompletionStage<Job> cancelFuture = scheduler.cancel("job");
+		CompletionStage<Job> otherCancelFuture = scheduler.cancel("job");
+		assertThat(cancelFuture).isSameAs(otherCancelFuture);
+
+		cancelFuture.toCompletableFuture().get(1, TimeUnit.SECONDS);
+
+		CompletionStage<Job> lastCancelFuture = scheduler.cancel("job");
+		assertThat(lastCancelFuture.toCompletableFuture().isDone()).isTrue();
+
+		scheduler.gracefullyShutdown();
+	}
+
+	@Test
 	public void cancelled_job_should_be_schedulable_again() throws Exception {
 		Scheduler scheduler = new Scheduler(SchedulerConfig.builder().maxThreads(1).build());
 		scheduler.schedule("doNothing", doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(100)));
@@ -70,17 +100,7 @@ public class SchedulerCancelTest {
 		Scheduler scheduler = new Scheduler(SchedulerConfig.builder().maxThreads(1).build());
 
 		SingleJob jobProcess1 = new SingleJob();
-		SingleJob jobProcess2 = new SingleJob() {
-			@Override
-			public void run() {
-				try {
-					Thread.sleep(200);
-					super.run();
-				} catch (InterruptedException e) {
-					throw new RuntimeException("Should not be interrupted", e);
-				}
-			}
-		};
+		SingleJob jobProcess2 = JOB_THAT_SLEEP_FOR_200MS;
 
 		Job job1 = scheduler.schedule(jobProcess1, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
 		Job job2 = scheduler.schedule(jobProcess2, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
