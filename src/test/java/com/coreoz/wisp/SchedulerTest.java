@@ -271,6 +271,20 @@ public class SchedulerTest {
 		assertThat(isJob1ExecutedAfterJob2.get()).isTrue();
 	}
 
+	@Test
+	public void exception_in_job_should_not_prevent_the_job_from_running() throws InterruptedException {
+		Scheduler scheduler = new Scheduler();
+
+		Runnable runnable = () -> { throw new RuntimeException("Excepted exception"); };
+
+		Job job = scheduler.schedule(runnable, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		Thread.sleep(40L);
+
+		assertThat(job.executionsCount()).isGreaterThan(1);
+
+		scheduler.gracefullyShutdown();
+	}
+
 	private void runTwoConcurrentJobsForAtLeastFiftyIterations(Scheduler scheduler)
 			throws InterruptedException {
 		SingleJob job1 = new SingleJob();
