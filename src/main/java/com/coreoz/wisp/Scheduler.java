@@ -176,23 +176,13 @@ public final class Scheduler {
 		Objects.requireNonNull(when, "Schedule must not be null");
 
 		String name = nullableName == null ? runnable.toString() : nullableName;
-		Job job = new Job(JobStatus.DONE, 0L, 0, null, name, when, runnable);
 
 		long currentTimeInMillis = timeProvider.currentTime();
 		if(when.nextExecutionInMillis(currentTimeInMillis, 0, null) < currentTimeInMillis) {
 			logger.warn("The job '{}' is scheduled at a paste date: it will never be executed", name);
 		}
 
-		// lock needed to make sure 2 jobs with the same name are not submitted at the same time
-		synchronized (indexedJobsByName) {
-			if(findJob(name)
-				.filter(existingJob -> existingJob.status() != JobStatus.DONE)
-				.isPresent()) {
-				throw new IllegalArgumentException("A job is already scheduled with the name:" + name);
-			}
-			indexedJobsByName.put(name, job);
-		}
-
+		Job job = prepareJob(name, runnable, when);
 		logger.info("Scheduling job '{}' to run {}", job.name(), job.schedule());
 		synchronized (this) {
 			scheduleNextExecution(job);
@@ -327,6 +317,30 @@ public final class Scheduler {
 	}
 
 	// internal
+
+	private Job prepareJob(String name, Runnable runnable, Schedule when) {
+		// lock needed to make sure 2 jobs with the same name are not submitted at the same time
+		synchronized (indexedJobsByName) {
+			Job lastJob = findJob(name).orElse(null);
+
+			if(lastJob != null && lastJob.status() != JobStatus.DONE) {
+				throw new IllegalArgumentException("A job is already scheduled with the name:" + name);
+			}
+
+			Job job = new Job(
+				JobStatus.DONE,
+				0L,
+				lastJob != null ? lastJob.executionsCount() : 0,
+				lastJob != null ? lastJob.lastExecutionTimeInMillis() : null,
+				name,
+				when,
+				runnable
+			);
+			indexedJobsByName.put(name, job);
+
+			return job;
+		}
+	}
 
 	private synchronized void scheduleNextExecution(Job job) {
 		// clean up
