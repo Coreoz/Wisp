@@ -338,21 +338,6 @@ public class SchedulerTest {
 		assertThat(job.executionsCount() - countBeforeSleep).isGreaterThan(3);
 	}
 
-	@Test
-	public void scheduling_a_cancelled_job_should_keep_its_previous_stats() throws InterruptedException {
-		Scheduler scheduler = new Scheduler();
-
-		Job job = scheduler.schedule("job", Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
-		Thread.sleep(25L);
-
-		scheduler.cancel("job");
-		Job newJob = scheduler.schedule("job", Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
-		scheduler.gracefullyShutdown();
-
-		assertThat(newJob.executionsCount()).isGreaterThanOrEqualTo(job.executionsCount());
-		assertThat(newJob.lastExecutionTimeInMillis()).isNotNull();
-	}
-
 	private void runTwoConcurrentJobsForAtLeastFiftyIterations(Scheduler scheduler)
 			throws InterruptedException {
 		SingleJob job1 = new SingleJob();

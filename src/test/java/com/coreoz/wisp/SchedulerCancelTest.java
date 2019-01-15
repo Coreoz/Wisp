@@ -160,4 +160,20 @@ public class SchedulerCancelTest {
 		}
 	}
 
+
+	@Test
+	public void scheduling_a_cancelled_job_should_keep_its_previous_stats() throws InterruptedException, ExecutionException, TimeoutException {
+		Scheduler scheduler = new Scheduler();
+
+		Job job = scheduler.schedule("job", Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		Thread.sleep(25L);
+
+		scheduler.cancel("job").toCompletableFuture().get(1, TimeUnit.SECONDS);
+		Job newJob = scheduler.schedule("job", Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		scheduler.gracefullyShutdown();
+
+		assertThat(newJob.executionsCount()).isGreaterThanOrEqualTo(job.executionsCount());
+		assertThat(newJob.lastExecutionTimeInMillis()).isNotNull();
+	}
+
 }
