@@ -161,7 +161,11 @@ public final class Scheduler {
 	}
 
 	/**
-	 * Schedule the executions of a process.
+	 * Schedule the executions of a process.<br>
+	 * <br>
+	 * If a job already exists with the same name and has the status {@link JobStatus#DONE},
+	 * then the created job will inherit the stats of the existing done job:
+	 * {@link Job#executionsCount()} and {@link Job#lastExecutionTimeInMillis()}
 	 *
 	 * @param nullableName The name of the created job
 	 * @param runnable The process to be executed at a schedule
