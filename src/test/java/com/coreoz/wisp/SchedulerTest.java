@@ -293,12 +293,17 @@ public class SchedulerTest {
 
 		Runnable runnable = () -> { throw new RuntimeException("Excepted exception"); };
 
-		Job job = scheduler.schedule(runnable, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		Job job = scheduler.schedule(
+			runnable,
+			Schedules.afterInitialDelay(
+				Schedules.fixedDelaySchedule(Duration.ofMillis(15)),
+				Duration.ZERO
+			)
+		);
 		Thread.sleep(40L);
+		scheduler.gracefullyShutdown();
 
 		assertThat(job.executionsCount()).isGreaterThan(1);
-
-		scheduler.gracefullyShutdown();
 	}
 
 	@Test
