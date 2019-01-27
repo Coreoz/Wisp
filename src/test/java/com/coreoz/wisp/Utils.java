@@ -5,7 +5,7 @@ import java.util.function.Supplier;
 
 public class Utils {
 
-	public static final Runnable TASK_THAT_SLEEP_FOR_200MS = () -> {
+	public static final Runnable TASK_THAT_SLEEPS_FOR_200MS = () -> {
 		try {
 			Thread.sleep(200);
 		} catch (InterruptedException e) {

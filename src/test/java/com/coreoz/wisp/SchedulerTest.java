@@ -322,7 +322,7 @@ public class SchedulerTest {
 	public void check_that_a_running_job_has_the_right_status() throws InterruptedException {
 		Scheduler scheduler = new Scheduler();
 
-		Job job = scheduler.schedule(Utils.TASK_THAT_SLEEP_FOR_200MS, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		Job job = scheduler.schedule(Utils.TASK_THAT_SLEEPS_FOR_200MS, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
 		Thread.sleep(40L);
 		assertThat(job.status()).isEqualTo(JobStatus.RUNNING);
 		scheduler.gracefullyShutdown();
@@ -330,12 +330,12 @@ public class SchedulerTest {
 	}
 
 	@Test
-	public void check_that_a_long_running_job_does_not_prevent_other_job_to_run() throws InterruptedException {
+	public void check_that_a_long_running_job_does_not_prevent_other_jobs_to_run() throws InterruptedException {
 		Scheduler scheduler = new Scheduler();
 
 		Job job = scheduler.schedule(Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(10)));
 		Thread.sleep(25L);
-		scheduler.schedule(Utils.TASK_THAT_SLEEP_FOR_200MS, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		scheduler.schedule(Utils.TASK_THAT_SLEEPS_FOR_200MS, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
 		long countBeforeSleep = job.executionsCount();
 		Thread.sleep(50L);
 		scheduler.gracefullyShutdown();

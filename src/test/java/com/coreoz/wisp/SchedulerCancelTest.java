@@ -52,7 +52,7 @@ public class SchedulerCancelTest {
 	@Test
 	public void second_cancel_should_return_either_the_first_promise_or_either_a_completed_future() throws Exception {
 		Scheduler scheduler = new Scheduler(SchedulerConfig.builder().maxThreads(1).build());
-		scheduler.schedule("job", Utils.TASK_THAT_SLEEP_FOR_200MS, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		scheduler.schedule("job", Utils.TASK_THAT_SLEEPS_FOR_200MS, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
 
 		// so the job can start executing
 		Thread.sleep(20L);

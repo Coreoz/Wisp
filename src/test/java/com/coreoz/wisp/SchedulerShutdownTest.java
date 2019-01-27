@@ -25,7 +25,7 @@ public class SchedulerShutdownTest {
 	public void second_shutdown_should_still_wait_for_its_timeout() throws InterruptedException {
 		Scheduler scheduler = new Scheduler();
 
-		scheduler.schedule(Utils.TASK_THAT_SLEEP_FOR_200MS, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		scheduler.schedule(Utils.TASK_THAT_SLEEPS_FOR_200MS, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
 		// so the job can start executing
 		Thread.sleep(20L);
 
@@ -45,7 +45,7 @@ public class SchedulerShutdownTest {
 	public void ready_job_should_finish_without_being_executed_during_shutdown() throws InterruptedException {
 		Scheduler scheduler = new Scheduler(SchedulerConfig.builder().maxThreads(1).build());
 
-		scheduler.schedule(Utils.TASK_THAT_SLEEP_FOR_200MS, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		scheduler.schedule(Utils.TASK_THAT_SLEEPS_FOR_200MS, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
 		// so the job can start executing
 		Thread.sleep(20L);
 		SingleJob jobThatExecuteInTwoseconds = new SingleJob() {

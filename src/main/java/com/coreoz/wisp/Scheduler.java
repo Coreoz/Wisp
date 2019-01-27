@@ -43,13 +43,13 @@ public final class Scheduler {
 
 	/**
 	 * @deprecated Default values are available in {@link SchedulerConfig}
-	 * It will be deleted in version 2.0.0.
+	 * It will be deleted in version 3.0.0.
 	 */
 	@Deprecated
 	public static final int DEFAULT_THREAD_POOL_SIZE = 10;
 	/**
 	 * @deprecated This value is not used anymore
-	 * It will be deleted in version 2.0.0.
+	 * It will be deleted in version 3.0.0.
 	 */
 	@Deprecated
 	public static final long DEFAULT_MINIMUM_DELAY_IN_MILLIS_TO_REPLACE_JOB = 10L;
