@@ -16,6 +16,10 @@ Though a job will never be executed early, it will generally run after 1ms of th
 
 Wisp is compatible with Java 8 and higher.
 
+Upgrade from version 1.x.x to version 2.x.x
+-------------------------------------------
+- Cron utils should be upgraded to version 8.0.0
+
 Getting started
 ---------------
 
@@ -75,7 +79,7 @@ So to use cron expression, cron-utils should be added in the project:
 <dependency>
     <groupId>com.cronutils</groupId>
     <artifactId>cron-utils</artifactId>
-    <version>6.0.4</version>
+    <version>8.0.0</version>
 </dependency>
 ```
 Then to create a job which is executed every hour at the 30th minute,
