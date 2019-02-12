@@ -15,7 +15,7 @@ import lombok.Getter;
 @Builder
 public class SchedulerConfig {
 
-	private static final TimeProvider DEFAULT_TIME_PROVIDER = new SystemTimeProvider();
+	public static final TimeProvider DEFAULT_TIME_PROVIDER = new SystemTimeProvider();
 	private static final Duration NON_EXPIRABLE_THREADS = Duration.ofMillis(Long.MAX_VALUE);
 
 	/**

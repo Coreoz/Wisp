@@ -17,6 +17,8 @@ public class Job {
 	private volatile long nextExecutionTimeInMillis;
 	private volatile int executionsCount;
 	private Long lastExecutionTimeInMillis;
+	private Long timeInMillisSinceWhenJobRunning;
+	private Thread threadRunningJob;
 	private final String name;
 	private Schedule schedule;
 	private final Runnable runnable;
@@ -38,6 +40,19 @@ public class Job {
 
 	public Long lastExecutionTimeInMillis() {
 		return lastExecutionTimeInMillis;
+	}
+
+	/**
+	 * The time of the start of the job execution.
+	 *
+	 * Not null only when {@code #status() == JobStatus.RUNNING}.
+	 */
+	public Long timeInMillisSinceWhenJobRunning() {
+		return timeInMillisSinceWhenJobRunning;
+	}
+
+	public Thread threadRunningJob() {
+		return threadRunningJob;
 	}
 
 	public String name() {
@@ -65,24 +80,28 @@ public class Job {
 		this.runnable = runnable;
 	}
 
-	Job status(JobStatus status) {
+	void status(JobStatus status) {
 		this.status = status;
-		return this;
 	}
 
-	Job nextExecutionTimeInMillis(long nextExecutionTimeInMillis) {
+	void nextExecutionTimeInMillis(long nextExecutionTimeInMillis) {
 		this.nextExecutionTimeInMillis = nextExecutionTimeInMillis;
-		return this;
 	}
 
-	Job executionsCount(int executionsCount) {
+	void executionsCount(int executionsCount) {
 		this.executionsCount = executionsCount;
-		return this;
 	}
 
-	Job lastExecutionTimeInMillis(Long lastExecutionTimeInMillis) {
+	void lastExecutionTimeInMillis(Long lastExecutionTimeInMillis) {
 		this.lastExecutionTimeInMillis = lastExecutionTimeInMillis;
-		return this;
+	}
+
+	void timeInMillisSinceWhenJobRunning(Long timeInMillisSinceWhenJobRunning) {
+		this.timeInMillisSinceWhenJobRunning = timeInMillisSinceWhenJobRunning;
+	}
+
+	void threadRunningJob(Thread threadRunningJob) {
+		this.threadRunningJob = threadRunningJob;
 	}
 
 	void schedule(Schedule schedule) {

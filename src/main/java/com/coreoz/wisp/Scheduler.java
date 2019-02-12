@@ -453,6 +453,8 @@ public final class Scheduler {
 			logger.debug("Job '{}' execution is {}ms late", jobToRun.name(), -timeBeforeNextExecution);
 		}
 		jobToRun.status(JobStatus.RUNNING);
+		jobToRun.timeInMillisSinceWhenJobRunning(startExecutionTime);
+		jobToRun.threadRunningJob(Thread.currentThread());
 
 		try {
 			jobToRun.runnable().run();
@@ -461,6 +463,8 @@ public final class Scheduler {
 		}
 		jobToRun.executionsCount(jobToRun.executionsCount() + 1);
 		jobToRun.lastExecutionTimeInMillis(timeProvider.currentTime());
+		jobToRun.timeInMillisSinceWhenJobRunning(null);
+		jobToRun.threadRunningJob(null);
 
 		if(logger.isDebugEnabled()) {
 			logger.debug(
