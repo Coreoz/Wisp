@@ -7,6 +7,7 @@ import static org.junit.Assert.fail;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.assertj.core.data.Offset;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -272,12 +273,12 @@ public class SchedulerTest {
 		});
 
 		Thread thread1 = new Thread(() -> {
-			waitOn(job1, () -> isJob1ExecutedAfterJob2.get(), 1000);
+			waitOn(job1, () -> isJob1ExecutedAfterJob2.get(), 10000);
 		});
 		thread1.start();
 		thread1.join();
 		Thread thread2 = new Thread(() -> {
-			waitOn(job2, () -> job2.countExecuted.get() > 0, 1000);
+			waitOn(job2, () -> job2.countExecuted.get() > 0, 10000);
 		});
 		thread2.start();
 		thread2.join();
@@ -341,6 +342,26 @@ public class SchedulerTest {
 		scheduler.gracefullyShutdown();
 
 		assertThat(job.executionsCount() - countBeforeSleep).isGreaterThan(3);
+	}
+
+	@Test
+	public void check_that_metrics_are_correctly_updated_during_and_after_a_job_execution() throws InterruptedException {
+		Scheduler scheduler = new Scheduler();
+
+		Job job = scheduler.schedule(Utils.TASK_THAT_SLEEPS_FOR_200MS, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+
+		Thread.sleep(25L);
+		assertThat(job.executionsCount()).isZero();
+		assertThat(job.lastExecutionTimeInMillis()).isNull();
+		assertThat(job.timeInMillisSinceJobRunning()).isCloseTo(System.currentTimeMillis(), Offset.offset(200L));
+		assertThat(job.threadRunningJob()).isNotNull();
+
+		scheduler.gracefullyShutdown();
+
+		assertThat(job.executionsCount()).isOne();
+		assertThat(job.lastExecutionTimeInMillis()).isNotNull();
+		assertThat(job.timeInMillisSinceJobRunning()).isNull();
+		assertThat(job.threadRunningJob()).isNull();
 	}
 
 	private void runTwoConcurrentJobsForAtLeastFiftyIterations(Scheduler scheduler)

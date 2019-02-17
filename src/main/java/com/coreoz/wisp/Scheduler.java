@@ -1,6 +1,7 @@
 package com.coreoz.wisp;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -15,6 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -56,7 +58,7 @@ public final class Scheduler {
 
 	private final ThreadPoolExecutor threadPoolExecutor;
 	private final TimeProvider timeProvider;
-	private final Object launcherNotifier;
+	private final AtomicBoolean launcherNotifier;
 
 	// jobs
 	private final Map<String, Job> indexedJobsByName;
@@ -103,7 +105,7 @@ public final class Scheduler {
 		this.indexedJobsByName = new ConcurrentHashMap<>();
 		this.nextExecutionsOrder = new ArrayList<>();
 		this.timeProvider = config.getTimeProvider();
-		this.launcherNotifier = new Object();
+		this.launcherNotifier = new AtomicBoolean(true);
 		this.cancelHandles = new ConcurrentHashMap<>();
 		Executors.newCachedThreadPool(new WispThreadFactory());
 		this.threadPoolExecutor = new ScalingThreadPoolExecutor(
@@ -188,9 +190,7 @@ public final class Scheduler {
 
 		Job job = prepareJob(name, runnable, when);
 		logger.info("Scheduling job '{}' to run {}", job.name(), job.schedule());
-		synchronized (this) {
-			scheduleNextExecution(job);
-		}
+		scheduleNextExecution(job);
 
 		return job;
 	}
@@ -302,6 +302,7 @@ public final class Scheduler {
 				job.status(JobStatus.DONE);
 			}
 			synchronized (launcherNotifier) {
+				launcherNotifier.set(false);
 				launcherNotifier.notify();
 			}
 		}
@@ -361,7 +362,7 @@ public final class Scheduler {
 		} catch (Throwable t) {
 			logger.error(
 				"An exception was raised during the job next execution time calculation,"
-				+ " therefore the job {} will not be executed again.",
+				+ " therefore the job '{}' will not be executed again.",
 				job.name(),
 				t
 			);
@@ -377,9 +378,15 @@ public final class Scheduler {
 			));
 
 			synchronized (launcherNotifier) {
+				launcherNotifier.set(false);
 				launcherNotifier.notify();
 			}
 		} else {
+			logger.info(
+				"Job '{}' will not be executed again since its next execution time, {}ms, is planned in the past",
+				job.name(),
+				Instant.ofEpochMilli(job.nextExecutionTimeInMillis())
+			);
 			job.status(JobStatus.DONE);
 
 			CompletableFuture<Job> cancelHandle = cancelHandles.remove(job.name());
@@ -411,11 +418,18 @@ public final class Scheduler {
 					if(shuttingDown) {
 						return;
 					}
-					if(timeBeforeNextExecution == null) {
-						launcherNotifier.wait();
-					} else {
-						launcherNotifier.wait(timeBeforeNextExecution);
+					// If someone has notified the launcher
+					// then the launcher must check again the next job to execute.
+					// We must be sure not to miss any changes that would have
+					// happened after the timeBeforeNextExecution calculation.
+					if(launcherNotifier.get()) {
+						if(timeBeforeNextExecution == null) {
+							launcherNotifier.wait();
+						} else {
+							launcherNotifier.wait(timeBeforeNextExecution);
+						}
 					}
+					launcherNotifier.set(true);
 				}
 			} else {
 				synchronized (this) {
@@ -453,7 +467,7 @@ public final class Scheduler {
 			logger.debug("Job '{}' execution is {}ms late", jobToRun.name(), -timeBeforeNextExecution);
 		}
 		jobToRun.status(JobStatus.RUNNING);
-		jobToRun.timeInMillisSinceWhenJobRunning(startExecutionTime);
+		jobToRun.timeInMillisSinceJobRunning(startExecutionTime);
 		jobToRun.threadRunningJob(Thread.currentThread());
 
 		try {
@@ -463,7 +477,7 @@ public final class Scheduler {
 		}
 		jobToRun.executionsCount(jobToRun.executionsCount() + 1);
 		jobToRun.lastExecutionTimeInMillis(timeProvider.currentTime());
-		jobToRun.timeInMillisSinceWhenJobRunning(null);
+		jobToRun.timeInMillisSinceJobRunning(null);
 		jobToRun.threadRunningJob(null);
 
 		if(logger.isDebugEnabled()) {
