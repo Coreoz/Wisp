@@ -297,11 +297,11 @@ public class SchedulerTest {
 		Job job = scheduler.schedule(
 			runnable,
 			Schedules.afterInitialDelay(
-				Schedules.fixedDelaySchedule(Duration.ofMillis(15)),
+				Schedules.fixedDelaySchedule(Duration.ofMillis(5)),
 				Duration.ZERO
 			)
 		);
-		Thread.sleep(40L);
+		Thread.sleep(50L);
 		scheduler.gracefullyShutdown();
 
 		assertThat(job.executionsCount()).isGreaterThan(1);
