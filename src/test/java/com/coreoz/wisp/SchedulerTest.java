@@ -1,16 +1,18 @@
 package com.coreoz.wisp;
 
+import static com.coreoz.wisp.Utils.waitOn;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 
+import org.assertj.core.data.Offset;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.coreoz.wisp.Utils.SingleJob;
 import com.coreoz.wisp.schedule.Schedules;
 import com.coreoz.wisp.stats.SchedulerStats;
 import com.coreoz.wisp.time.SystemTimeProvider;
@@ -18,6 +20,21 @@ import com.coreoz.wisp.time.SystemTimeProvider;
 public class SchedulerTest {
 
 	private static final Logger logger = LoggerFactory.getLogger(SchedulerTest.class);
+
+	@Test
+	public void check_that_two_job_cannot_be_scheduled_with_the_same_name() {
+		Scheduler scheduler = new Scheduler();
+
+		scheduler.schedule("job", Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		try {
+			scheduler.schedule("job", Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+			fail();
+		} catch (IllegalArgumentException e) {
+			// as expected
+		}
+
+		scheduler.gracefullyShutdown();
+	}
 
 	@Test
 	public void should_run_a_single_job() throws InterruptedException {
@@ -97,13 +114,19 @@ public class SchedulerTest {
 			stats.getThreadPoolStats().getActiveThreads()
 			+ stats.getThreadPoolStats().getIdleThreads()
 		)
-		.isEqualTo(1);
+		// 1 thread for the launcher + 1 thread for the tasks
+		.isLessThanOrEqualTo(2);
 	}
 
 	@Test
 	public void should_not_run_early_job() throws InterruptedException {
 		SystemTimeProvider timeProvider = new SystemTimeProvider();
-		Scheduler scheduler = new Scheduler(1, 10, timeProvider);
+		Scheduler scheduler = new Scheduler(SchedulerConfig
+			.builder()
+			.maxThreads(1)
+			.timeProvider(timeProvider)
+			.build()
+		);
 		SingleJob job1 = new SingleJob();
 		long beforeExecutionTime = timeProvider.currentTime();
 		Duration jobIntervalTime = Duration.ofMillis(40);
@@ -146,7 +169,7 @@ public class SchedulerTest {
 
 	@Test
 	public void should_shutdown_instantly_if_no_job_is_running__races_test() {
-		for(int i=0; i<100; i++) {
+		for(int i=0; i<10000; i++) {
 			should_shutdown_instantly_if_no_job_is_running();
 		}
 	}
@@ -165,30 +188,6 @@ public class SchedulerTest {
 	}
 
 	@Test
-	public void should_not_create_more_threads_than_necessary_on_startup__races_test() {
-		for(int i=0; i<100; i++) {
-			should_not_create_more_threads_than_necessary_on_startup();
-		}
-	}
-
-	@Test
-	public void should_not_create_more_threads_than_necessary_on_startup() {
-		Scheduler scheduler = new Scheduler();
-
-		scheduler.schedule("job1", () -> {}, Schedules.executeOnce(Schedules.fixedDelaySchedule(Duration.ofSeconds(60))));
-		scheduler.schedule("job2", () -> {}, Schedules.executeOnce(Schedules.fixedDelaySchedule(Duration.ofSeconds(20))));
-
-		SchedulerStats stats = scheduler.stats();
-		scheduler.gracefullyShutdown();
-
-		assertThat(
-			stats.getThreadPoolStats().getActiveThreads()
-			+ stats.getThreadPoolStats().getIdleThreads()
-		)
-		.isEqualTo(1);
-	}
-
-	@Test
 	public void should_not_create_more_threads_than_jobs_scheduled_over_time__races_test()
 			throws InterruptedException {
 		for(int i=0; i<100; i++) {
@@ -200,22 +199,7 @@ public class SchedulerTest {
 	public void should_not_create_more_threads_than_jobs_scheduled_over_time() throws InterruptedException {
 		Scheduler scheduler = new Scheduler();
 
-		SingleJob job1 = new SingleJob();
-		SingleJob job2 = new SingleJob();
-
-		scheduler.schedule("job1", job1, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
-		scheduler.schedule("job2", job2, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
-
-		Thread thread1 = new Thread(() -> {
-			waitOn(job1, () -> job1.countExecuted.get() > 50, 100);
-		});
-		thread1.start();
-		thread1.join();
-		Thread thread2 = new Thread(() -> {
-			waitOn(job2, () -> job2.countExecuted.get() > 50, 100);
-		});
-		thread2.start();
-		thread2.join();
+		runTwoConcurrentJobsForAtLeastFiftyIterations(scheduler);
 
 		SchedulerStats stats = scheduler.stats();
 		scheduler.gracefullyShutdown();
@@ -224,7 +208,11 @@ public class SchedulerTest {
 			stats.getThreadPoolStats().getActiveThreads()
 			+ stats.getThreadPoolStats().getIdleThreads()
 		)
-		.isLessThanOrEqualTo(2);
+		// 1 thread for the launcher + 1 thread for each task => 3
+		// but since most of the thread pool logic is delegated to ThreadPoolExecutor
+		// we do not have precise control on how much threads will be created.
+		// So we mostly want to check that not all threads of the pool are created.
+		.isLessThanOrEqualTo(6);
 	}
 
 	@Test
@@ -236,8 +224,33 @@ public class SchedulerTest {
 	}
 
 	@Test
+	public void thread_pool_should_scale_down_when_no_more_tasks_need_executing() throws InterruptedException {
+		Scheduler scheduler = new Scheduler(
+			SchedulerConfig
+				.builder()
+				.threadsKeepAliveTime(Duration.ofMillis(50))
+				.build()
+		);
+
+		runTwoConcurrentJobsForAtLeastFiftyIterations(scheduler);
+		scheduler.cancel("job1");
+		scheduler.cancel("job2");
+
+		Thread.sleep(60L);
+		SchedulerStats stats = scheduler.stats();
+		scheduler.gracefullyShutdown();
+
+		assertThat(
+			stats.getThreadPoolStats().getActiveThreads()
+			+ stats.getThreadPoolStats().getIdleThreads()
+		)
+		// 1 thread for the launcher
+		.isLessThanOrEqualTo(1);
+	}
+
+	@Test
 	public void exception_in_schedule_should_not_alter_scheduler() throws InterruptedException {
-		Scheduler scheduler = new Scheduler(1, 0);
+		Scheduler scheduler = new Scheduler(SchedulerConfig.builder().maxThreads(1).build());
 
 		AtomicBoolean isJob1ExecutedAfterJob2 = new AtomicBoolean(false);
 		SingleJob job2 = new SingleJob();
@@ -256,16 +269,16 @@ public class SchedulerTest {
 			if(executionsCount == 0) {
 				return currentTimeInMillis;
 			}
-			throw new RuntimeException();
+			throw new RuntimeException("Expected exception");
 		});
 
 		Thread thread1 = new Thread(() -> {
-			waitOn(job1, () -> isJob1ExecutedAfterJob2.get(), 1000);
+			waitOn(job1, () -> isJob1ExecutedAfterJob2.get(), 10000);
 		});
 		thread1.start();
 		thread1.join();
 		Thread thread2 = new Thread(() -> {
-			waitOn(job2, () -> job2.countExecuted.get() > 0, 1000);
+			waitOn(job2, () -> job2.countExecuted.get() > 0, 10000);
 		});
 		thread2.start();
 		thread2.join();
@@ -275,30 +288,100 @@ public class SchedulerTest {
 		assertThat(isJob1ExecutedAfterJob2.get()).isTrue();
 	}
 
-	private static class SingleJob implements Runnable {
-		AtomicInteger countExecuted = new AtomicInteger(0);
+	@Test
+	public void exception_in_job_should_not_prevent_the_job_from_running() throws InterruptedException {
+		Scheduler scheduler = new Scheduler();
 
-		@Override
-		public void run() {
-			countExecuted.incrementAndGet();
-			synchronized (this) {
-				notifyAll();
-			}
-		}
+		Runnable runnable = () -> { throw new RuntimeException("Excepted exception"); };
+
+		Job job = scheduler.schedule(
+			runnable,
+			Schedules.afterInitialDelay(
+				Schedules.fixedDelaySchedule(Duration.ofMillis(5)),
+				Duration.ZERO
+			)
+		);
+		Thread.sleep(50L);
+		scheduler.gracefullyShutdown();
+
+		assertThat(job.executionsCount()).isGreaterThan(1);
 	}
 
-	private static void waitOn(Object lockOn, Supplier<Boolean> condition, long maxWait) {
-		long currentTime = System.currentTimeMillis();
-		long waitUntil = currentTime + maxWait;
-		while(!condition.get() && waitUntil > currentTime) {
-			synchronized (lockOn) {
-				try {
-					lockOn.wait(5);
-				} catch (InterruptedException e) {
-				}
-			}
-			currentTime = System.currentTimeMillis();
-		}
+	@Test
+	public void check_that_a_scheduled_job_has_the_right_status() {
+		Scheduler scheduler = new Scheduler();
+
+		Job job = scheduler.schedule(Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofSeconds(1)));
+
+		assertThat(job.status()).isEqualTo(JobStatus.SCHEDULED);
+
+		scheduler.gracefullyShutdown();
+		assertThat(job.status()).isEqualTo(JobStatus.DONE);
+	}
+
+	@Test
+	public void check_that_a_running_job_has_the_right_status() throws InterruptedException {
+		Scheduler scheduler = new Scheduler();
+
+		Job job = scheduler.schedule(Utils.TASK_THAT_SLEEPS_FOR_200MS, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		Thread.sleep(40L);
+		assertThat(job.status()).isEqualTo(JobStatus.RUNNING);
+		scheduler.gracefullyShutdown();
+		assertThat(job.status()).isEqualTo(JobStatus.DONE);
+	}
+
+	@Test
+	public void check_that_a_long_running_job_does_not_prevent_other_jobs_to_run() throws InterruptedException {
+		Scheduler scheduler = new Scheduler();
+
+		Job job = scheduler.schedule(Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(10)));
+		Thread.sleep(25L);
+		scheduler.schedule(Utils.TASK_THAT_SLEEPS_FOR_200MS, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		long countBeforeSleep = job.executionsCount();
+		Thread.sleep(50L);
+		scheduler.gracefullyShutdown();
+
+		assertThat(job.executionsCount() - countBeforeSleep).isGreaterThan(3);
+	}
+
+	@Test
+	public void check_that_metrics_are_correctly_updated_during_and_after_a_job_execution() throws InterruptedException {
+		Scheduler scheduler = new Scheduler();
+
+		Job job = scheduler.schedule(Utils.TASK_THAT_SLEEPS_FOR_200MS, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+
+		Thread.sleep(25L);
+		assertThat(job.executionsCount()).isZero();
+		assertThat(job.lastExecutionTimeInMillis()).isNull();
+		assertThat(job.timeInMillisSinceJobRunning()).isCloseTo(System.currentTimeMillis(), Offset.offset(200L));
+		assertThat(job.threadRunningJob()).isNotNull();
+
+		scheduler.gracefullyShutdown();
+
+		assertThat(job.executionsCount()).isOne();
+		assertThat(job.lastExecutionTimeInMillis()).isNotNull();
+		assertThat(job.timeInMillisSinceJobRunning()).isNull();
+		assertThat(job.threadRunningJob()).isNull();
+	}
+
+	private void runTwoConcurrentJobsForAtLeastFiftyIterations(Scheduler scheduler)
+			throws InterruptedException {
+		SingleJob job1 = new SingleJob();
+		SingleJob job2 = new SingleJob();
+
+		scheduler.schedule("job1", job1, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		scheduler.schedule("job2", job2, Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+
+		Thread thread1 = new Thread(() -> {
+			waitOn(job1, () -> job1.countExecuted.get() > 50, 100);
+		});
+		thread1.start();
+		thread1.join();
+		Thread thread2 = new Thread(() -> {
+			waitOn(job2, () -> job2.countExecuted.get() > 50, 100);
+		});
+		thread2.start();
+		thread2.join();
 	}
 
 }

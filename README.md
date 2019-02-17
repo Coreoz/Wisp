@@ -6,10 +6,10 @@ Wisp Scheduler
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.coreoz/wisp/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.coreoz/wisp)
 
 Wisp is a simple Java Scheduler with a minimal footprint.
-Wisp weighs only 30Kb and has zero dependency.
-It will only create threads that will be used: if one thread is enough to run all the jobs,
-then only one thread will be created.
-A second thread will only be created when 2 jobs have to run at the exact same time.
+Wisp weighs only 30Kb and has zero dependency except SLF4J.
+It will only create threads that will be used: if two threads are enough to run all the jobs,
+then only two threads will be created.
+A third thread will only be created when 2 jobs have to run at the same time.
 
 The scheduler precision will depend on the system load.
 Though a job will never be executed early, it will generally run after 1ms of the scheduled time.
@@ -24,7 +24,7 @@ Include Wisp in your project:
 <dependency>
     <groupId>com.coreoz</groupId>
     <artifactId>wisp</artifactId>
-    <version>1.0.0</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
@@ -42,6 +42,14 @@ Done!
 A project should generally contain only one instance of a `Scheduler`.
 So either a dependency injection framework handles this instance,
 or either a static instance of `Scheduler` should be created.
+
+In production, it is generally a good practice to configure the
+[monitor for long running jobs detection](#long-running-jobs-detection).
+
+Upgrade from version 1.x.x to version 2.x.x
+-------------------------------------------
+- If a cron schedule is used, then cron-utils must be upgraded to version 8.0.0
+- The [monitor for long running jobs detection](#long-running-jobs-detection) might be configured
 
 Schedules
 ---------
@@ -75,7 +83,7 @@ So to use cron expression, cron-utils should be added in the project:
 <dependency>
     <groupId>com.cronutils</groupId>
     <artifactId>cron-utils</artifactId>
-    <version>6.0.4</version>
+    <version>8.0.0</version>
 </dependency>
 ```
 Then to create a job which is executed every hour at the 30th minute,
@@ -93,6 +101,20 @@ However once a past time is returned by a schedule,
 the associated job will never be executed again.
 At the first execution, if a past time is referenced a warning will be logged
 but no exception will be raised.
+
+### Long running jobs detection
+To detect jobs that are running for too long, an optional job monitor is provided.
+It can be setup with:
+```java
+scheduler.schedule(
+    new LongRunningJobMonitor(scheduler),
+    Schedules.fixedDelaySchedule(Duration.ofMinutes(1))
+);
+```
+This way, every minute, the monitor will check for jobs that are running for more than 5 minutes.
+A warning message with the job stack trace will be logged for any job running for more than 5 minutes.
+
+The detection threshold can also be configured this way: `new LongRunningJobMonitor(scheduler, Duration.ofMinutes(15))`
 
 Plume Framework integration
 ---------------------------

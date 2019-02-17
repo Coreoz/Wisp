@@ -1,8 +1,10 @@
 package com.coreoz.wisp.stats;
 
-import lombok.Value;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
-@Value(staticConstructor = "of")
+@Getter
+@AllArgsConstructor(staticName = "of")
 public class SchedulerStats {
 
 	private final ThreadPoolStats threadPoolStats;

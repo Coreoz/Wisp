@@ -7,7 +7,15 @@ package com.coreoz.wisp.schedule;
  */
 public interface Schedule {
 
+	/**
+	 * If the {@link #nextExecutionInMillis(long, int, Long)} returned value is {@code -1},
+	 * then the corresponding job will not be executed again.
+	 */
 	static final long WILL_NOT_BE_EXECUTED_AGAIN = -1L;
+	/**
+	 * A schedule that will always return {@link #WILL_NOT_BE_EXECUTED_AGAIN}.
+	 */
+	static final Schedule willNeverBeExecuted = (c, e, l) -> Schedule.WILL_NOT_BE_EXECUTED_AGAIN;
 
 	/**
 	 * Compute the next execution time for a job.
