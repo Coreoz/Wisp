@@ -102,7 +102,9 @@ the associated job will never be executed again.
 At the first execution, if a past time is referenced a warning will be logged
 but no exception will be raised.
 
-### Long running jobs detection
+Long running jobs detection
+---------------------------
+
 To detect jobs that are running for too long, an optional job monitor is provided.
 It can be setup with:
 ```java
@@ -115,6 +117,27 @@ This way, every minute, the monitor will check for jobs that are running for mor
 A warning message with the job stack trace will be logged for any job running for more than 5 minutes.
 
 The detection threshold can also be configured this way: `new LongRunningJobMonitor(scheduler, Duration.ofMinutes(15))`
+
+Scalable thread pool
+--------------------
+
+By default the thread pool size will only grow up from 0 to 10 threads (+ 1 thread reserved for the scheduler).
+But it is also possible to define a maximum keep alive duration after which idle threads will be removed from the pool.
+This can be configured this way:
+```java
+Scheduler scheduler = new Scheduler(
+    SchedulerConfig
+        .builder()
+        .minThreads(2)
+        .maxThreads(15)
+        .threadsKeepAliveTime(Duration.ofHours(1))
+        .build()
+);
+```
+In this example:
+- There will be always at least 2 threads to run the jobs,
+- The thread pool can grow up to 15 threads to run the jobs,
+- Idle threads for at least an hour will be removed from the pool, until the 2 minimum threads remain.  
 
 Plume Framework integration
 ---------------------------
