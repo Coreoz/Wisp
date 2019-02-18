@@ -109,8 +109,8 @@ public final class Scheduler {
 		this.cancelHandles = new ConcurrentHashMap<>();
 		Executors.newCachedThreadPool(new WispThreadFactory());
 		this.threadPoolExecutor = new ScalingThreadPoolExecutor(
-			config.getMinThreads(),
 			// +1 is to include the job launcher thread
+			config.getMinThreads() + 1,
 			config.getMaxThreads() + 1,
 			config.getThreadsKeepAliveTime().toMillis(),
 			TimeUnit.MILLISECONDS,
