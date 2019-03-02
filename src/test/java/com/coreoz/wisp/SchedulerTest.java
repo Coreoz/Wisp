@@ -143,7 +143,7 @@ public class SchedulerTest {
 		thread1.join();
 		scheduler.gracefullyShutdown();
 
-		assertThat(job.lastExecutionTimeInMillis() - beforeExecutionTime)
+		assertThat(job.lastExecutionEndedTimeInMillis() - beforeExecutionTime)
 			.isGreaterThanOrEqualTo(jobIntervalTime.toMillis());
 	}
 
@@ -299,15 +299,15 @@ public class SchedulerTest {
 
 		Thread.sleep(25L);
 		assertThat(job.executionsCount()).isZero();
-		assertThat(job.lastExecutionTimeInMillis()).isNull();
-		assertThat(job.timeInMillisSinceJobRunning()).isCloseTo(System.currentTimeMillis(), Offset.offset(200L));
+		assertThat(job.lastExecutionEndedTimeInMillis()).isNull();
+		assertThat(job.lastExecutionStartedTimeInMillis()).isCloseTo(System.currentTimeMillis(), Offset.offset(200L));
 		assertThat(job.threadRunningJob()).isNotNull();
 
 		scheduler.gracefullyShutdown();
 
 		assertThat(job.executionsCount()).isOne();
-		assertThat(job.lastExecutionTimeInMillis()).isNotNull();
-		assertThat(job.timeInMillisSinceJobRunning()).isNull();
+		assertThat(job.lastExecutionEndedTimeInMillis()).isNotNull();
+		assertThat(job.lastExecutionStartedTimeInMillis()).isNotNull();
 		assertThat(job.threadRunningJob()).isNull();
 	}
 

@@ -13,22 +13,22 @@ public class LongRunningJobMonitorTest {
 		LongRunningJobMonitor detector = new LongRunningJobMonitor(null, Duration.ofMillis(10));
 
 		Job job = newJob();
-		job.timeInMillisSinceJobRunning(-11L);
+		job.lastExecutionStartedTimeInMillis(-11L);
 		job.threadRunningJob(Thread.currentThread());
 		assertThat(detector.detectLongRunningJob(0, job)).isTrue();
 
 		job = newJob();
-		job.timeInMillisSinceJobRunning(-12L);
+		job.lastExecutionStartedTimeInMillis(-12L);
 		job.threadRunningJob(Thread.currentThread());
 		assertThat(detector.detectLongRunningJob(0, job)).isTrue();
 
 		job = newJob();
-		job.timeInMillisSinceJobRunning(-10L);
+		job.lastExecutionStartedTimeInMillis(-10L);
 		job.threadRunningJob(Thread.currentThread());
 		assertThat(detector.detectLongRunningJob(0, job)).isFalse();
 
 		job = newJob();
-		job.timeInMillisSinceJobRunning(-9L);
+		job.lastExecutionStartedTimeInMillis(-9L);
 		job.threadRunningJob(Thread.currentThread());
 		assertThat(detector.detectLongRunningJob(0, job)).isFalse();
 	}
@@ -38,7 +38,7 @@ public class LongRunningJobMonitorTest {
 		LongRunningJobMonitor detector = new LongRunningJobMonitor(null, Duration.ofMillis(10));
 
 		Job job = newJob();
-		job.timeInMillisSinceJobRunning(-100L);
+		job.lastExecutionStartedTimeInMillis(-100L);
 		job.threadRunningJob(Thread.currentThread());
 
 		assertThat(detector.detectLongRunningJob(0, job)).isTrue();
@@ -52,10 +52,10 @@ public class LongRunningJobMonitorTest {
 		Job job = newJob();
 		assertThat(detector.detectLongRunningJob(0, job)).isFalse();
 
-		job.timeInMillisSinceJobRunning(-100L);
+		job.lastExecutionStartedTimeInMillis(-100L);
 		assertThat(detector.detectLongRunningJob(0, job)).isFalse();
 
-		job.timeInMillisSinceJobRunning(null);
+		job.lastExecutionStartedTimeInMillis(null);
 		job.threadRunningJob(Thread.currentThread());
 		assertThat(detector.detectLongRunningJob(0, job)).isFalse();
 	}
@@ -65,7 +65,7 @@ public class LongRunningJobMonitorTest {
 		LongRunningJobMonitor detector = new LongRunningJobMonitor(null);
 		Job job = newJob();
 		job.status(JobStatus.SCHEDULED);
-		job.timeInMillisSinceJobRunning(0L); // running for a long time...
+		job.lastExecutionStartedTimeInMillis(0L); // running for a long time...
 		job.threadRunningJob(Thread.currentThread());
 
 		assertThat(detector.detectLongRunningJob(System.currentTimeMillis(), job)).isFalse();
@@ -87,7 +87,7 @@ public class LongRunningJobMonitorTest {
 		LongRunningJobMonitor detector = new LongRunningJobMonitor(null, Duration.ofMillis(10));
 
 		Job job = newJob();
-		job.timeInMillisSinceJobRunning(-100L);
+		job.lastExecutionStartedTimeInMillis(-100L);
 		job.threadRunningJob(Thread.currentThread());
 		detector.detectLongRunningJob(0, job);
 
@@ -99,11 +99,11 @@ public class LongRunningJobMonitorTest {
 		LongRunningJobMonitor detector = new LongRunningJobMonitor(null, Duration.ofMillis(10));
 
 		Job job = newJob();
-		job.timeInMillisSinceJobRunning(-100L);
+		job.lastExecutionStartedTimeInMillis(-100L);
 		job.threadRunningJob(Thread.currentThread());
 		detector.detectLongRunningJob(0, job);
 		job.executionsCount(1);
-		job.lastExecutionTimeInMillis(-50L);
+		job.lastExecutionEndedTimeInMillis(-50L);
 
 		assertThat(detector.cleanUpLongJobIfItHasFinishedExecuting(0, job)).isEqualTo(50L);
 	}
@@ -113,11 +113,11 @@ public class LongRunningJobMonitorTest {
 		LongRunningJobMonitor detector = new LongRunningJobMonitor(null, Duration.ofMillis(10));
 
 		Job job = newJob();
-		job.timeInMillisSinceJobRunning(-100L);
+		job.lastExecutionStartedTimeInMillis(-100L);
 		job.threadRunningJob(Thread.currentThread());
 		detector.detectLongRunningJob(0, job);
 		job.executionsCount(2);
-		job.lastExecutionTimeInMillis(-50L);
+		job.lastExecutionEndedTimeInMillis(-50L);
 
 		assertThat(detector.cleanUpLongJobIfItHasFinishedExecuting(0, job)).isEqualTo(100L);
 	}
@@ -127,11 +127,11 @@ public class LongRunningJobMonitorTest {
 		LongRunningJobMonitor detector = new LongRunningJobMonitor(null, Duration.ofMillis(10));
 
 		Job job = newJob();
-		job.timeInMillisSinceJobRunning(-100L);
+		job.lastExecutionStartedTimeInMillis(-100L);
 		job.threadRunningJob(Thread.currentThread());
 		detector.detectLongRunningJob(0, job);
 		job.executionsCount(1);
-		job.lastExecutionTimeInMillis(-50L);
+		job.lastExecutionEndedTimeInMillis(-50L);
 
 		assertThat(detector.cleanUpLongJobIfItHasFinishedExecuting(0, job)).isEqualTo(50L);
 		assertThat(detector.cleanUpLongJobIfItHasFinishedExecuting(0, job)).isNull();
@@ -142,6 +142,7 @@ public class LongRunningJobMonitorTest {
 			JobStatus.RUNNING,
 			-1L,
 			0,
+			null,
 			null,
 			"job name",
 			null,

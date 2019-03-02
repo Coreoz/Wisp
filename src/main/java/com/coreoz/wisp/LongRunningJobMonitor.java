@@ -81,16 +81,16 @@ public class LongRunningJobMonitor implements Runnable {
 	boolean detectLongRunningJob(long currentTime, Job job) {
 		if(job.status() == JobStatus.RUNNING && !longRunningJobs.containsKey(job)) {
 			int jobExecutionsCount = job.executionsCount();
-			Long timeInMillisSinceJobRunning = job.timeInMillisSinceJobRunning();
+			Long jobStartedtimeInMillis = job.lastExecutionStartedTimeInMillis();
 			Thread threadRunningJob = job.threadRunningJob();
 
-			if(timeInMillisSinceJobRunning != null
+			if(jobStartedtimeInMillis != null
 				&& threadRunningJob != null
-				&& currentTime - timeInMillisSinceJobRunning > detectionThresholdInMillis) {
+				&& currentTime - jobStartedtimeInMillis > detectionThresholdInMillis) {
 				logger.warn(
 					"Job '{}' is still running after {}ms (detection threshold = {}ms), stack trace = {}",
 					job.name(),
-					currentTime - timeInMillisSinceJobRunning,
+					currentTime - jobStartedtimeInMillis,
 					detectionThresholdInMillis,
 					Stream
 						.of(threadRunningJob.getStackTrace())
@@ -100,7 +100,7 @@ public class LongRunningJobMonitor implements Runnable {
 
 				longRunningJobs.put(
 					job,
-					new LongRunningJobInfo(timeInMillisSinceJobRunning, jobExecutionsCount)
+					new LongRunningJobInfo(jobStartedtimeInMillis, jobExecutionsCount)
 				);
 
 				return true;
@@ -115,21 +115,20 @@ public class LongRunningJobMonitor implements Runnable {
 	Long cleanUpLongJobIfItHasFinishedExecuting(long currentTime, Job job) {
 		if(longRunningJobs.containsKey(job)
 			&& longRunningJobs.get(job).executionsCount != job.executionsCount()) {
-			Long jobLastExecutionTimeInMillis = job.lastExecutionTimeInMillis();
+			Long jobLastExecutionTimeInMillis = job.lastExecutionEndedTimeInMillis();
 			int jobExecutionsCount = job.executionsCount();
 			LongRunningJobInfo jobRunningInfo = longRunningJobs.get(job);
 
 			long jobExecutionDuration = 0L;
-			if(jobExecutionsCount == jobRunningInfo.executionsCount + 1
-				&& jobLastExecutionTimeInMillis != null) {
-				jobExecutionDuration = jobLastExecutionTimeInMillis - jobRunningInfo.timeInMillisSinceJobRunning;
+			if(jobExecutionsCount == jobRunningInfo.executionsCount + 1) {
+				jobExecutionDuration = jobLastExecutionTimeInMillis - jobRunningInfo.jobStartedtimeInMillis;
 				logger.info(
 					"Job '{}' has finished executing after {}ms",
 					job.name(),
 					jobExecutionDuration
 				);
 			} else {
-				jobExecutionDuration = currentTime - jobRunningInfo.timeInMillisSinceJobRunning;
+				jobExecutionDuration = currentTime - jobRunningInfo.jobStartedtimeInMillis;
 				logger.info(
 					"Job '{}' has finished executing after about {}ms",
 					job.name(),
@@ -146,7 +145,7 @@ public class LongRunningJobMonitor implements Runnable {
 
 	@AllArgsConstructor
 	private static class LongRunningJobInfo {
-		final long timeInMillisSinceJobRunning;
+		final long jobStartedtimeInMillis;
 		final int executionsCount;
 	}
 

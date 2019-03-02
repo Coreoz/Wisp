@@ -16,8 +16,8 @@ public class Job {
 	private JobStatus status;
 	private volatile long nextExecutionTimeInMillis;
 	private volatile int executionsCount;
-	private Long lastExecutionTimeInMillis;
-	private Long timeInMillisSinceJobRunning;
+	private Long lastExecutionStartedTimeInMillis;
+	private Long lastExecutionEndedTimeInMillis;
 	private Thread threadRunningJob;
 	private final String name;
 	private Schedule schedule;
@@ -38,17 +38,39 @@ public class Job {
 		return executionsCount;
 	}
 
-	public Long lastExecutionTimeInMillis() {
-		return lastExecutionTimeInMillis;
+	/**
+	 * The timestamp of when the job has last been started.
+	 */
+	public Long lastExecutionStartedTimeInMillis() {
+		return lastExecutionStartedTimeInMillis;
 	}
 
 	/**
-	 * The time of the start of the job execution.
+	 * The timestamp of when the job has last been started.
 	 *
-	 * Not null only when {@code #status() == JobStatus.RUNNING}.
+	 * @deprecated Use {@link #lastExecutionStartedTimeInMillis()}.
+	 * This method will be deleted in version 3.0.0.
 	 */
+	@Deprecated
 	public Long timeInMillisSinceJobRunning() {
-		return timeInMillisSinceJobRunning;
+		return lastExecutionStartedTimeInMillis;
+	}
+
+	/**
+	 * The timestamp of when the job has last finished executing.
+	 */
+	public Long lastExecutionEndedTimeInMillis() {
+		return lastExecutionEndedTimeInMillis;
+	}
+
+	/**
+	 * The timestamp of when the job has last finished executing.
+	 * @deprecated Use {@link #lastExecutionEndedTimeInMillis()}.
+	 * This method will be deleted in version 3.0.0.
+	 */
+	@Deprecated
+	public Long lastExecutionTimeInMillis() {
+		return lastExecutionEndedTimeInMillis;
 	}
 
 	public Thread threadRunningJob() {
@@ -70,11 +92,13 @@ public class Job {
 	// package API
 
 	Job(JobStatus status, long nextExecutionTimeInMillis, int executionsCount,
-			Long lastExecutionTimeInMillis, String name, Schedule schedule, Runnable runnable) {
+			Long lastExecutionStartedTimeInMillis, Long lastExecutionEndedTimeInMillis,
+			String name, Schedule schedule, Runnable runnable) {
 		this.status = status;
 		this.nextExecutionTimeInMillis = nextExecutionTimeInMillis;
 		this.executionsCount = executionsCount;
-		this.lastExecutionTimeInMillis = lastExecutionTimeInMillis;
+		this.lastExecutionStartedTimeInMillis = lastExecutionStartedTimeInMillis;
+		this.lastExecutionEndedTimeInMillis = lastExecutionEndedTimeInMillis;
 		this.name = name;
 		this.schedule = schedule;
 		this.runnable = runnable;
@@ -92,12 +116,12 @@ public class Job {
 		this.executionsCount = executionsCount;
 	}
 
-	void lastExecutionTimeInMillis(Long lastExecutionTimeInMillis) {
-		this.lastExecutionTimeInMillis = lastExecutionTimeInMillis;
+	void lastExecutionStartedTimeInMillis(Long lastExecutionStartedTimeInMillis) {
+		this.lastExecutionStartedTimeInMillis = lastExecutionStartedTimeInMillis;
 	}
 
-	void timeInMillisSinceJobRunning(Long timeInMillisSinceJobRunning) {
-		this.timeInMillisSinceJobRunning = timeInMillisSinceJobRunning;
+	void lastExecutionEndedTimeInMillis(Long lastExecutionEndedTimeInMillis) {
+		this.lastExecutionEndedTimeInMillis = lastExecutionEndedTimeInMillis;
 	}
 
 	void threadRunningJob(Thread threadRunningJob) {

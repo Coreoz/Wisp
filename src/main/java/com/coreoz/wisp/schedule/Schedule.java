@@ -24,12 +24,12 @@ public interface Schedule {
 	 * @param currentTimeInMillis The current time in milliseconds. This time must be used if
 	 * a next execution is planned for the job
 	 * @param executionsCount The number of times a job has already been executed
-	 * @param lastExecutionTimeInMillis The time at which the job has last been executed; will be null
+	 * @param lastExecutionEndedTimeInMillis The time at which the job has last been executed; will be null
 	 * if the job has never been executed
 	 * @return The time in milliseconds at which the job should execute next.
 	 * This time must be relative to {@code currentTimeInMillis}.
 	 * If the returned value is negative, the job will not be executed again.
 	 */
-	long nextExecutionInMillis(long currentTimeInMillis, int executionsCount, Long lastExecutionTimeInMillis);
+	long nextExecutionInMillis(long currentTimeInMillis, int executionsCount, Long lastExecutionEndedTimeInMillis);
 
 }

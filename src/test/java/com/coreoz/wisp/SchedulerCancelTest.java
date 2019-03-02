@@ -173,7 +173,7 @@ public class SchedulerCancelTest {
 		scheduler.gracefullyShutdown();
 
 		assertThat(newJob.executionsCount()).isGreaterThanOrEqualTo(job.executionsCount());
-		assertThat(newJob.lastExecutionTimeInMillis()).isNotNull();
+		assertThat(newJob.lastExecutionEndedTimeInMillis()).isNotNull();
 	}
 
 }

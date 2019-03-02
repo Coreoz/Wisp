@@ -123,7 +123,7 @@ public final class Scheduler {
 
 	/**
 	 * @deprecated Use {@link #Scheduler(SchedulerConfig)} to specify multiple configuration values.
-	 * It will be deleted in version 2.0.0.
+	 * It will be deleted in version 3.0.0.
 	 * @throws IllegalArgumentException if {@code maxThreads <= 0}
 	 */
 	@Deprecated
@@ -133,7 +133,7 @@ public final class Scheduler {
 
 	/**
 	 * @deprecated Use {@link #Scheduler(SchedulerConfig)} to specify multiple configuration values.
-	 * It will be deleted in version 2.0.0.
+	 * It will be deleted in version 3.0.0.
 	 * @throws IllegalArgumentException if {@code maxThreads <= 0}
 	 * @throws NullPointerException if {@code timeProvider} is {@code null}
 	 */
@@ -341,7 +341,8 @@ public final class Scheduler {
 				JobStatus.DONE,
 				0L,
 				lastJob != null ? lastJob.executionsCount() : 0,
-				lastJob != null ? lastJob.lastExecutionTimeInMillis() : null,
+				lastJob != null ? lastJob.lastExecutionStartedTimeInMillis() : null,
+				lastJob != null ? lastJob.lastExecutionEndedTimeInMillis() : null,
 				name,
 				when,
 				runnable
@@ -361,7 +362,7 @@ public final class Scheduler {
 		try {
 			job.nextExecutionTimeInMillis(
 				job.schedule().nextExecutionInMillis(
-					currentTimeInMillis, job.executionsCount(), job.lastExecutionTimeInMillis()
+					currentTimeInMillis, job.executionsCount(), job.lastExecutionEndedTimeInMillis()
 				)
 			);
 		} catch (Throwable t) {
@@ -470,7 +471,7 @@ public final class Scheduler {
 			logger.debug("Job '{}' execution is {}ms late", jobToRun.name(), -timeBeforeNextExecution);
 		}
 		jobToRun.status(JobStatus.RUNNING);
-		jobToRun.timeInMillisSinceJobRunning(startExecutionTime);
+		jobToRun.lastExecutionStartedTimeInMillis(startExecutionTime);
 		jobToRun.threadRunningJob(Thread.currentThread());
 
 		try {
@@ -479,8 +480,7 @@ public final class Scheduler {
 			logger.error("Error during job '{}' execution", jobToRun.name(), t);
 		}
 		jobToRun.executionsCount(jobToRun.executionsCount() + 1);
-		jobToRun.lastExecutionTimeInMillis(timeProvider.currentTime());
-		jobToRun.timeInMillisSinceJobRunning(null);
+		jobToRun.lastExecutionEndedTimeInMillis(timeProvider.currentTime());
 		jobToRun.threadRunningJob(null);
 
 		if(logger.isDebugEnabled()) {
@@ -513,4 +513,3 @@ public final class Scheduler {
 	}
 
 }
-
