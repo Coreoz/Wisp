@@ -16,10 +16,11 @@ public class AfterInitialDelayScheduleTest {
 	}
 
 	@Test
-	public void second_execution_should_depends_only_on_the_first_delay() {
+	public void should_not_rely_on_job_executions_count() {
 		Schedule every5ms = Schedules.fixedDelaySchedule(Duration.ofMillis(5));
-		AfterInitialDelaySchedule afterUnusedDelay = new AfterInitialDelaySchedule(every5ms, null);
+		AfterInitialDelaySchedule afterUnusedDelay = new AfterInitialDelaySchedule(every5ms, Duration.ZERO);
 
+		assertThat(afterUnusedDelay.nextExecutionInMillis(0, 1, null)).isEqualTo(0);
 		assertThat(afterUnusedDelay.nextExecutionInMillis(0, 1, null)).isEqualTo(5);
 	}
 
