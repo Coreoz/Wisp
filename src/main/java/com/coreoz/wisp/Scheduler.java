@@ -80,8 +80,6 @@ public final class Scheduler {
 	 * Create a scheduler with the defaults defined at {@link SchedulerConfig}
 	 * and with a max number of worker threads
 	 * @param maxThreads The maximum number of worker threads that can be created for the scheduler.
-	 * Note that the limit of threads will actually be maxThreads + 1,
-	 * because one thread is reserved for the scheduler internals.
 	 * @throws IllegalArgumentException if {@code maxThreads <= 0}
 	 */
 	public Scheduler(int maxThreads) {
@@ -109,14 +107,18 @@ public final class Scheduler {
 		this.cancelHandles = new ConcurrentHashMap<>();
 		Executors.newCachedThreadPool(new WispThreadFactory());
 		this.threadPoolExecutor = new ScalingThreadPoolExecutor(
-			// +1 is to include the job launcher thread
-			config.getMinThreads() + 1,
-			config.getMaxThreads() + 1,
+			config.getMinThreads(),
+			config.getMaxThreads(),
 			config.getThreadsKeepAliveTime().toMillis(),
 			TimeUnit.MILLISECONDS,
 			new WispThreadFactory()
 		);
-		threadPoolExecutor.execute(this::launcher);
+		// run job launcher thread
+		Thread launcherThread = new Thread(this::launcher, "Wisp Monitor");
+		if (launcherThread.isDaemon()) {
+			launcherThread.setDaemon(false);
+		}
+		launcherThread.start();
 	}
 
 	/**
@@ -402,8 +404,6 @@ public final class Scheduler {
 	 */
 	@SneakyThrows
 	private void launcher() {
-		Thread.currentThread().setName("Wisp Monitor");
-
 		while(!shuttingDown) {
 			Long timeBeforeNextExecution = null;
 			synchronized (this) {

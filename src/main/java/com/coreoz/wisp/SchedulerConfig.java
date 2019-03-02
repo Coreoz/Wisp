@@ -24,8 +24,6 @@ public class SchedulerConfig {
 	@Builder.Default private final int minThreads = 0;
 	/**
 	 * The maximum number of threads that will live in the jobs threads pool.
-	 * Note that the limit of threads will actually be maxThreads + 1,
-	 * because one thread is reserved for the scheduler internals.
 	 */
 	@Builder.Default private final int maxThreads = 10;
 	/**

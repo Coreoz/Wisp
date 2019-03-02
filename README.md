@@ -7,9 +7,9 @@ Wisp Scheduler
 
 Wisp is a simple Java Scheduler with a minimal footprint.
 Wisp weighs only 30Kb and has zero dependency except SLF4J.
-It will only create threads that will be used: if two threads are enough to run all the jobs,
-then only two threads will be created.
-A third thread will only be created when 2 jobs have to run at the same time.
+It will only create threads that will be used: if one thread is enough to run all the jobs,
+then only one thread will be created.
+A second thread will only be created when 2 jobs have to run at the same time.
 
 The scheduler precision will depend on the system load.
 Though a job will never be executed early, it will generally run after 1ms of the scheduled time.
@@ -121,7 +121,7 @@ The detection threshold can also be configured this way: `new LongRunningJobMoni
 Scalable thread pool
 --------------------
 
-By default the thread pool size will only grow up from 0 to 10 threads (+ 1 thread reserved for the scheduler).
+By default the thread pool size will only grow up, from 0 to 10 threads (and not scale down).
 But it is also possible to define a maximum keep alive duration after which idle threads will be removed from the pool.
 This can be configured this way:
 ```java
