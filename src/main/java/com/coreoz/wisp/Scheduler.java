@@ -318,8 +318,11 @@ public final class Scheduler {
 	public SchedulerStats stats() {
 		int activeThreads = threadPoolExecutor.getActiveCount();
 		return SchedulerStats.of(ThreadPoolStats.of(
+			threadPoolExecutor.getCorePoolSize(),
+			threadPoolExecutor.getMaximumPoolSize(),
 			activeThreads,
-			threadPoolExecutor.getPoolSize() - activeThreads
+			threadPoolExecutor.getPoolSize() - activeThreads,
+			threadPoolExecutor.getLargestPoolSize()
 		));
 	}
 

@@ -35,6 +35,7 @@ public class SchedulerThreadPoolTest {
 			+ stats.getThreadPoolStats().getIdleThreads()
 		)
 		.isLessThanOrEqualTo(0);
+		assertThat(stats.getThreadPoolStats().getLargestPoolSize()).isGreaterThanOrEqualTo(1);
 	}
 
 	@Test
@@ -65,6 +66,30 @@ public class SchedulerThreadPoolTest {
 		.isLessThanOrEqualTo(5);
 	}
 
+	@Test
+	public void should_provide_accurate_pool_size_stats() throws InterruptedException {
+		Scheduler scheduler = new Scheduler();
+		scheduler.schedule(() -> {
+			try {
+				Thread.sleep(100);
+			} catch (Exception e) {
+				// do not care any exception
+			}
+			},
+			Schedules.executeOnce(Schedules.fixedDelaySchedule(Duration.ZERO))
+		);
+
+		Thread.sleep(30L);
+
+		SchedulerStats stats = scheduler.stats();
+		scheduler.gracefullyShutdown();
+
+		assertThat(stats.getThreadPoolStats().getActiveThreads()).isEqualTo(1);
+		assertThat(stats.getThreadPoolStats().getIdleThreads()).isEqualTo(0);
+		assertThat(stats.getThreadPoolStats().getMinThreads()).isEqualTo(0);
+		assertThat(stats.getThreadPoolStats().getMaxThreads()).isEqualTo(10);
+		assertThat(stats.getThreadPoolStats().getLargestPoolSize()).isEqualTo(1);
+	}
 
 	private void runTwoConcurrentJobsForAtLeastFiftyIterations(Scheduler scheduler)
 			throws InterruptedException {
