@@ -23,6 +23,10 @@ public class AfterInitialDelaySchedule implements Schedule {
 		return baseSchedule.nextExecutionInMillis(currentTimeInMillis, executionsCount, lastExecutionTimeInMillis);
 	}
 
+	public Schedule baseSchedule() {
+		return baseSchedule;
+	}
+
 	@Override
 	public String toString() {
 		if(hasNotBeenExecuted) {
