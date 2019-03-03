@@ -5,11 +5,17 @@ Wisp Scheduler
 [![Coverage Status](https://coveralls.io/repos/github/Coreoz/Wisp/badge.svg?branch=master)](https://coveralls.io/github/Coreoz/Wisp?branch=master)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.coreoz/wisp/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.coreoz/wisp)
 
-Wisp is a simple Java Scheduler with a minimal footprint.
-Wisp weighs only 30Kb and has zero dependency except SLF4J.
-It will only create threads that will be used: if one thread is enough to run all the jobs,
+Wisp is a library for managing the execution of recurring Java jobs.
+It works like the Java class `ScheduledThreadPoolExecutor`, but it comes with some advanced features:
+- [Jobs can be scheduled to run](#schedules) according to: a fixed hour (e.g. 00:30), a CRON expression, or a custom code-based expression,
+- [Statistics](#statistics) about each job execution can be retrieved,
+- A [too long jobs detection mechanism](#long-running-jobs-detection) can be configured,
+- The [thread pool can be configured to scale down](#scalable-thread-pool) when there is less jobs to execute concurrently.
+
+Wisp weighs only 30Kb and has zero dependency except SLF4J for logging.
+It will try to only create threads that will be used: if one thread is enough to run all the jobs,
 then only one thread will be created.
-A second thread will only be created when 2 jobs have to run at the same time.
+A second thread will generally be created only when 2 jobs have to run at the same time.
 
 The scheduler precision will depend on the system load.
 Though a job will never be executed early, it will generally run after 1ms of the scheduled time.
@@ -46,10 +52,10 @@ or either a static instance of `Scheduler` should be created.
 In production, it is generally a good practice to configure the
 [monitor for long running jobs detection](#long-running-jobs-detection).
 
-Upgrade from version 1.x.x to version 2.x.x
--------------------------------------------
-- If a cron schedule is used, then cron-utils must be upgraded to version 8.0.0
-- The [monitor for long running jobs detection](#long-running-jobs-detection) might be configured
+Changelog and upgrade instructions
+----------------------------------
+All the changelog and the upgrades instructions are available
+in the [project releases page](https://github.com/Coreoz/Wisp/releases).
 
 Schedules
 ---------
@@ -102,6 +108,23 @@ the associated job will never be executed again.
 At the first execution, if a past time is referenced a warning will be logged
 but no exception will be raised.
 
+Statistics
+----------
+Two methods enable to fetch scheduler statistics:
+- `Scheduler.jobStatus()`: To fetch all the jobs executing on the scheduler. For each job, these data are available:
+  - name,
+  - status (see `JobStatus` for details),
+  - executions count,
+  - last execution start date,
+  - last execution end date,
+  - next execution date.
+- `Scheduler.jobStatus()`: To fetch statistics about the underlying thread pool:
+  - min threads,
+  - max threads,
+  - active threads running jobs,
+  - idle threads,
+  - largest thread pool size.
+
 Long running jobs detection
 ---------------------------
 
@@ -137,7 +160,7 @@ Scheduler scheduler = new Scheduler(
 In this example:
 - There will be always at least 2 threads to run the jobs,
 - The thread pool can grow up to 15 threads to run the jobs,
-- Idle threads for at least an hour will be removed from the pool, until the 2 minimum threads remain.  
+- Idle threads for at least an hour will be removed from the pool, until the 2 minimum threads remain.
 
 Plume Framework integration
 ---------------------------
