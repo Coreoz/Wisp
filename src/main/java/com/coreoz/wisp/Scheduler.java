@@ -185,12 +185,16 @@ public final class Scheduler {
 
 		String name = nullableName == null ? runnable.toString() : nullableName;
 
+		Job job = prepareJob(name, runnable, when);
 		long currentTimeInMillis = timeProvider.currentTime();
-		if(when.nextExecutionInMillis(currentTimeInMillis, 0, null) < currentTimeInMillis) {
+		if(when.nextExecutionInMillis(
+			currentTimeInMillis,
+			job.executionsCount(),
+			job.lastExecutionEndedTimeInMillis()
+			) < currentTimeInMillis) {
 			logger.warn("The job '{}' is scheduled at a paste date: it will never be executed", name);
 		}
 
-		Job job = prepareJob(name, runnable, when);
 		logger.info("Scheduling job '{}' to run {}", job.name(), job.schedule());
 		scheduleNextExecution(job);
 

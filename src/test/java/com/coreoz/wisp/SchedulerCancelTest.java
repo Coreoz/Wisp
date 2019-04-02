@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 import java.time.Duration;
+import java.util.Queue;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -14,6 +16,8 @@ import org.junit.Test;
 
 import com.coreoz.wisp.Utils.SingleJob;
 import com.coreoz.wisp.schedule.Schedules;
+
+import lombok.Value;
 
 /**
  * Tests about {@link Scheduler#cancel(String)} only
@@ -162,7 +166,7 @@ public class SchedulerCancelTest {
 
 
 	@Test
-	public void scheduling_a_cancelled_job_should_keep_its_previous_stats() throws InterruptedException, ExecutionException, TimeoutException {
+	public void scheduling_a_done_job_should_keep_its_previous_stats() throws InterruptedException, ExecutionException, TimeoutException {
 		Scheduler scheduler = new Scheduler();
 
 		Job job = scheduler.schedule("job", Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
@@ -174,6 +178,38 @@ public class SchedulerCancelTest {
 
 		assertThat(newJob.executionsCount()).isGreaterThanOrEqualTo(job.executionsCount());
 		assertThat(newJob.lastExecutionEndedTimeInMillis()).isNotNull();
+	}
+
+	@Test
+	public void check_that_a_done_job_scheduled_again_keeps_its_scheduler_stats() throws InterruptedException, ExecutionException, TimeoutException {
+		Scheduler scheduler = new Scheduler();
+
+		Job job = scheduler.schedule("job", Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		Thread.sleep(25L);
+
+		scheduler.cancel("job").toCompletableFuture().get(1, TimeUnit.SECONDS);
+		int beforeScheduledAgainCount = job.executionsCount();
+
+		Queue<ScheduledExecution> scheduledExecutions = new ConcurrentLinkedQueue<>();
+		scheduler.schedule("job", Utils.doNothing(), (long currentTimeInMillis, int executionsCount, Long lastExecutionEndedTimeInMillis) -> {
+			scheduledExecutions.add(ScheduledExecution.of(currentTimeInMillis, executionsCount, lastExecutionEndedTimeInMillis));
+			return currentTimeInMillis;
+		});
+		Thread.sleep(25L);
+		scheduler.gracefullyShutdown();
+
+		for(ScheduledExecution scheduledExecution : scheduledExecutions) {
+			assertThat(scheduledExecution.executionsCount).isGreaterThanOrEqualTo(beforeScheduledAgainCount);
+			assertThat(scheduledExecution.lastExecutionEndedTimeInMillis).isNotNull();
+			assertThat(scheduledExecution.lastExecutionEndedTimeInMillis).isLessThanOrEqualTo(scheduledExecution.currentTimeInMillis);
+		}
+	}
+
+	@Value(staticConstructor = "of")
+	private static final class ScheduledExecution {
+		private long currentTimeInMillis;
+		private int executionsCount;
+		private Long lastExecutionEndedTimeInMillis;
 	}
 
 }
