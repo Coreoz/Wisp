@@ -169,11 +169,11 @@ public class SchedulerCancelTest {
 	public void scheduling_a_done_job_should_keep_its_previous_stats() throws InterruptedException, ExecutionException, TimeoutException {
 		Scheduler scheduler = new Scheduler();
 
-		Job job = scheduler.schedule("job", Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		Job job = scheduler.schedule("job", doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
 		Thread.sleep(25L);
 
 		scheduler.cancel("job").toCompletableFuture().get(1, TimeUnit.SECONDS);
-		Job newJob = scheduler.schedule("job", Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		Job newJob = scheduler.schedule("job", doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
 		scheduler.gracefullyShutdown();
 
 		assertThat(newJob.executionsCount()).isGreaterThanOrEqualTo(job.executionsCount());
@@ -184,14 +184,14 @@ public class SchedulerCancelTest {
 	public void check_that_a_done_job_scheduled_again_keeps_its_scheduler_stats() throws InterruptedException, ExecutionException, TimeoutException {
 		Scheduler scheduler = new Scheduler();
 
-		Job job = scheduler.schedule("job", Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
+		Job job = scheduler.schedule("job", doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(1)));
 		Thread.sleep(25L);
 
 		scheduler.cancel("job").toCompletableFuture().get(1, TimeUnit.SECONDS);
 		int beforeScheduledAgainCount = job.executionsCount();
 
 		Queue<ScheduledExecution> scheduledExecutions = new ConcurrentLinkedQueue<>();
-		scheduler.schedule("job", Utils.doNothing(), (long currentTimeInMillis, int executionsCount, Long lastExecutionEndedTimeInMillis) -> {
+		scheduler.schedule("job", doNothing(), (long currentTimeInMillis, int executionsCount, Long lastExecutionEndedTimeInMillis) -> {
 			scheduledExecutions.add(ScheduledExecution.of(currentTimeInMillis, executionsCount, lastExecutionEndedTimeInMillis));
 			return currentTimeInMillis;
 		});
