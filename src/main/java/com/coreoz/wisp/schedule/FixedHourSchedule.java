@@ -3,7 +3,6 @@ package com.coreoz.wisp.schedule;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
@@ -27,7 +26,7 @@ public class FixedHourSchedule implements Schedule {
 	}
 
 	public FixedHourSchedule(LocalTime every) {
-		this(every, ZoneOffset.systemDefault());
+		this(every, ZoneId.systemDefault());
 	}
 
 	public FixedHourSchedule(LocalTime every, ZoneId zoneId) {

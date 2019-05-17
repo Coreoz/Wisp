@@ -35,10 +35,16 @@ public class CronSchedule implements Schedule {
 
 	private final ExecutionTime cronExpression;
 	private final String description;
+	private final ZoneId zoneId;
 
-	public CronSchedule(Cron cronExpression) {
+	public CronSchedule(Cron cronExpression, ZoneId zoneId) {
 		this.cronExpression = ExecutionTime.forCron(cronExpression);
 		this.description = ENGLISH_DESCRIPTOR.describe(cronExpression);
+		this.zoneId = zoneId;
+	}
+
+	public CronSchedule(Cron cronExpression) {
+		this(cronExpression, ZoneId.systemDefault());
 	}
 
 	@Override
@@ -46,7 +52,7 @@ public class CronSchedule implements Schedule {
 		Instant currentInstant = Instant.ofEpochMilli(currentTimeInMillis);
 		return cronExpression.timeToNextExecution(ZonedDateTime.ofInstant(
 			currentInstant,
-			ZoneId.systemDefault()
+			zoneId
 		))
 		.map(durationBetweenNextExecution ->
 			currentInstant.plus(durationBetweenNextExecution).toEpochMilli()
