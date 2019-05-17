@@ -248,7 +248,7 @@ public class SchedulerTest {
 				Duration.ZERO
 			)
 		);
-		Thread.sleep(100L);
+		Thread.sleep(150L);
 		scheduler.gracefullyShutdown();
 
 		assertThat(job.executionsCount()).isGreaterThan(1);
