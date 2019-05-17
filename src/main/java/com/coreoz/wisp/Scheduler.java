@@ -235,7 +235,8 @@ public final class Scheduler {
 		Job job = findJob(jobName).orElseThrow(IllegalArgumentException::new);
 
 		synchronized (this) {
-			if(job.status() == JobStatus.DONE) {
+			JobStatus jobStatus = job.status();
+			if(jobStatus == JobStatus.DONE) {
 				return CompletableFuture.completedFuture(job);
 			}
 			CompletableFuture<Job> existingHandle = cancelHandles.get(jobName);
@@ -244,15 +245,15 @@ public final class Scheduler {
 			}
 
 			job.schedule(Schedule.willNeverBeExecuted);
-			if(job.status() == JobStatus.READY && threadPoolExecutor.remove(job.runningJob())) {
+			if(jobStatus == JobStatus.READY && threadPoolExecutor.remove(job.runningJob())) {
 				scheduleNextExecution(job);
 				return CompletableFuture.completedFuture(job);
 			}
 
-			if(job.status() == JobStatus.RUNNING
+			if(jobStatus == JobStatus.RUNNING
 				// if the job status is/was READY but could not be removed from the thread pool,
 				// then we have to wait for it to finish
-				|| job.status() == JobStatus.READY) {
+				|| jobStatus == JobStatus.READY) {
 				CompletableFuture<Job> promise = new CompletableFuture<>();
 				cancelHandles.put(jobName, promise);
 				return promise;
