@@ -118,7 +118,7 @@ Two methods enable to fetch scheduler statistics:
   - last execution start date,
   - last execution end date,
   - next execution date.
-- `Scheduler.jobStatus()`: To fetch statistics about the underlying thread pool:
+- `Scheduler.stats()`: To fetch statistics about the underlying thread pool:
   - min threads,
   - max threads,
   - active threads running jobs,
