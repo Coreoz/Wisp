@@ -105,7 +105,6 @@ public final class Scheduler {
 		this.timeProvider = config.getTimeProvider();
 		this.launcherNotifier = new AtomicBoolean(true);
 		this.cancelHandles = new ConcurrentHashMap<>();
-		Executors.newCachedThreadPool(new WispThreadFactory());
 		this.threadPoolExecutor = new ScalingThreadPoolExecutor(
 			config.getMinThreads(),
 			config.getMaxThreads(),
