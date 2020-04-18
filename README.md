@@ -132,6 +132,7 @@ To detect jobs that are running for too long, an optional job monitor is provide
 It can be setup with:
 ```java
 scheduler.schedule(
+    "Long running job monitor",
     new LongRunningJobMonitor(scheduler),
     Schedules.fixedDelaySchedule(Duration.ofMinutes(1))
 );
