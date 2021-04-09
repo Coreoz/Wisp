@@ -89,7 +89,7 @@ So to use cron expression, cron-utils should be added in the project:
 <dependency>
     <groupId>com.cronutils</groupId>
     <artifactId>cron-utils</artifactId>
-    <version>8.0.0</version>
+    <version>9.1.5</version>
 </dependency>
 ```
 Then to create a job which is executed every hour at the 30th minute,
