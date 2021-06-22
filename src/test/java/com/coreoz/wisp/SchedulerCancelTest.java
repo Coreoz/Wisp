@@ -117,13 +117,13 @@ public class SchedulerCancelTest {
 
 		scheduler.cancel(job2.name()).toCompletableFuture().get(1, TimeUnit.SECONDS);
 
-		Thread.sleep(30);
+		Thread.sleep(60);
 		scheduler.gracefullyShutdown();
 
 		assertThat(job2.executionsCount()).isEqualTo(1);
 		assertThat(jobProcess2.countExecuted.get()).isEqualTo(1);
-		// after job 2 is cancelled, job 1 should have been executed at least 5 times
-		assertThat(job1.executionsCount()).isGreaterThan(job1ExecutionsCount + 5);
+		// after job 2 is cancelled, job 1 should have been executed at least 3 times
+		assertThat(job1.executionsCount()).isGreaterThan(job1ExecutionsCount + 3);
 	}
 
 	@Test

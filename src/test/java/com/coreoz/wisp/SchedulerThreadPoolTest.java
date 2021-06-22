@@ -26,7 +26,7 @@ public class SchedulerThreadPoolTest {
 		scheduler.cancel("job1");
 		scheduler.cancel("job2");
 
-		Thread.sleep(60L);
+		Thread.sleep(80L);
 		SchedulerStats stats = scheduler.stats();
 		scheduler.gracefullyShutdown();
 
