@@ -83,7 +83,8 @@ the job will be executed once 10 seconds after it has been scheduled.
 
 ### Cron
 Schedules can be created using [cron expressions](https://en.wikipedia.org/wiki/Cron#CRON_expression).
-This feature is made possible by the use of [cron-expression](https://github.com/frode-carlsen/cron).
+This feature is made possible by the use of [cron library](https://github.com/frode-carlsen/cron). This library is very lightweight: it has no dependency and is made of a single Java class of 650 lines of code.
+
 So to use cron expression, this library has to be added:
 ```xml
 <dependency>
