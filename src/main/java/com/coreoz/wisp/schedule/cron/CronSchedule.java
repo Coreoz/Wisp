@@ -23,7 +23,8 @@ import com.cronutils.parser.CronParser;
  * project dependency configuration (pom.xml, build.gradle, build.sbt etc.).
  *
  * @deprecated Use {@link CronExpressionScheduleTest} instead.
- * This class has been deprecated to move away from cron-utils. See issue #xxx for details.
+ * This class has been deprecated to move away from cron-utils. See
+ * <a href="https://github.com/Coreoz/Wisp/issues/14">issue #14</a> for details.
  */
 @Deprecated
 public class CronSchedule implements Schedule {

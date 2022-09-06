@@ -10,7 +10,13 @@ import fc.cron.CronExpression;
 
 /**
  * A {@link Schedule} based on a <a href="https://en.wikipedia.org/wiki/Cron#CRON_expression">
- * cron expression</a>.<br>
+ * Cron expression</a>.<br>
+ * <br>
+ * This class depends on <a href="https://github.com/frode-carlsen/cron">Cron library</a>,
+ * so this dependency has to be in the classpath in order to be able to use {@link CronExpressionSchedule}.
+ * Since the Cron library is marked as optional in Wisp, it has to be
+ * <a href="https://github.com/Coreoz/Wisp#cron">explicitly referenced in the project dependency configuration</a>
+ * (pom.xml, build.gradle, build.sbt etc.).<br>
  * <br>
  * See also {@link CronExpression} for format details and implementation.
  */
