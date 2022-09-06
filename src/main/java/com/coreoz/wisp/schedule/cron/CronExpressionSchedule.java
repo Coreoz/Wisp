@@ -6,6 +6,8 @@ import java.time.ZonedDateTime;
 
 import com.coreoz.wisp.schedule.Schedule;
 
+import fc.cron.CronExpression;
+
 /**
  * A {@link Schedule} based on a <a href="https://en.wikipedia.org/wiki/Cron#CRON_expression">
  * cron expression</a>.<br>
@@ -54,10 +56,10 @@ public class CronExpressionSchedule implements Schedule {
 
 	/**
 	 * Create a {@link Schedule} from a cron expression based on the Unix format, but accepting a second field as the first one,
-	 * e.g. 29 * * * * * for each minute.
+	 * e.g. 29 * * * * * for each minute at the second 29, for instance 12:05:29.
 	 */
 	public static CronExpressionSchedule parseWithSeconds(String cronExpression) {
-		return new CronExpressionSchedule(CronExpression.createWithoutSeconds(cronExpression));
+		return new CronExpressionSchedule(CronExpression.create(cronExpression));
 	}
 
 }

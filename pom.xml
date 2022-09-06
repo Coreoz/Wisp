@@ -176,6 +176,12 @@
 			<version>9.1.6</version>
 			<optional>true</optional>
 		</dependency>
+		<dependency>
+			<groupId>ch.eitchnet</groupId>
+			<artifactId>cron</artifactId>
+			<version>1.6.2</version>
+			<optional>true</optional>
+		</dependency>
 
 		<dependency>
 			<groupId>junit</groupId>

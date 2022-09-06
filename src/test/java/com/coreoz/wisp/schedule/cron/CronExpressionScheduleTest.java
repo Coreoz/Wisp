@@ -15,8 +15,22 @@ public class CronExpressionScheduleTest {
 	public void should_calcule_the_next_execution_time_based_on_a_unix_cron_expression() {
 		CronExpressionSchedule everyMinuteScheduler = CronExpressionSchedule.parse("* * * * *");
 
+		// To ease calculations, next execution time are calculated from the timestamp "0".
+		// So here, the absolute timestamp for an execution in 1 minute will be 60
 		assertThat(everyMinuteScheduler.nextExecutionInMillis(0, 0, null))
 		.isEqualTo(Duration.ofMinutes(1).toMillis());
+	}
+
+	@Test
+	public void should_calcule_the_next_execution_time_based_on_a_unix_cron_expression_with_seconds() {
+		CronExpressionSchedule everyMinuteScheduler = CronExpressionSchedule.parseWithSeconds("29 * * * * *");
+
+		assertThat(everyMinuteScheduler.nextExecutionInMillis(0, 0, null))
+		// the first iteration will be the absolute timestamp "29"
+		.isEqualTo(Duration.ofSeconds(29).toMillis());
+		assertThat(everyMinuteScheduler.nextExecutionInMillis(29000 , 1, null))
+		// the second iteration will be the absolute timestamp "89"
+		.isEqualTo(Duration.ofSeconds(60 + 29).toMillis());
 	}
 
 	@Test
