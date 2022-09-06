@@ -96,10 +96,10 @@ So to use cron expression, this library has to be added:
 Then to create a job which is executed every hour at the 30th minute,
 you can create the schedule: `CronExpressionSchedule.parse("30 * * * *")`.
 
-Cron expression should checked using a tool like [Cronhub](https://crontab.cronhub.io/).
+Cron expression should be checked using a tool like [Cronhub](https://crontab.cronhub.io/).
 
 Cron-utils was the default Cron implementation before Wisp 2.2.2. This has [changed in version 2.3.0](/../../issues/14).
-Documentation about this implementation can be found at [Wisp 2.2.2](/../../tree/2.2.2#cron).
+Documentation about cron-utils implementation can be found at [Wisp 2.2.2](/../../tree/2.2.2#cron).
 
 ### Custom schedules
 Custom schedules can be created,
