@@ -103,7 +103,7 @@ Cron expression should be checked using a tool like:
 
 Cron-utils was the default Cron implementation before Wisp 2.2.2. This has [changed in version 2.3.0](/../../issues/14).
 Documentation about cron-utils implementation can be found at [Wisp 2.2.2](/../../tree/2.2.2#cron).
-Migration from cron-utils is detailed in the [release note of Wisp 2.3.0](/../../releases/tags/2.3.0)
+Migration from cron-utils is detailed in the [release note of Wisp 2.3.0](/../../releases/tag/2.3.0)
 
 ### Custom schedules
 Custom schedules can be created,
