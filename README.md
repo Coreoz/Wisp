@@ -95,11 +95,18 @@ So to use cron expression, this library has to be added:
 ```
 
 Then to create a job which is executed every hour at the 30th minute,
-you can create the schedule: `CronExpressionSchedule.parse("30 * * * *")`.
+you can create the [schedule](#schedules) using: `CronExpressionSchedule.parse("30 * * * *")`.
+
+`CronExpressionSchedule` exposes two methods to create Cron expressions:
+- `CronExpressionSchedule.parse()` must be used to parse a 5 fields Cron expression (Unix standard), so without a second field
+- `CronExpressionSchedule.parseWithSeconds()` must be used to parse a 6 fields Cron expression, so the first field is the second
+
 
 Cron expression should be checked using a tool like:
 - [Cronhub](https://crontab.cronhub.io/)
 - [Freeformater](https://www.freeformatter.com/cron-expression-generator-quartz.html) *but be careful to not include the year field. So for the Cron expression `25 * * * * * *` (to run every minute at the second 25), the correct expression must be `25 * * * * *`*
+
+Sometimes a use case is to disable a job through configuration. This use case can be addressed by setting a Cron expression that looks up the 31st of February: `* * * 31 2 *`
 
 Cron-utils was the default Cron implementation before Wisp 2.2.2. This has [changed in version 2.3.0](/../../issues/14).
 Documentation about cron-utils implementation can be found at [Wisp 2.2.2](/../../tree/2.2.2#cron).
