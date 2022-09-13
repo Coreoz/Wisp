@@ -21,7 +21,12 @@ import com.cronutils.parser.CronParser;
  * so this dependency have to be in the classpath in order to be able to use {@link CronSchedule}.
  * Since cron-utils is marked as optional, it has to be explicitly referenced in the
  * project dependency configuration (pom.xml, build.gradle, build.sbt etc.).
+ *
+ * @deprecated Use {@link CronExpressionScheduleTest} instead.
+ * This class has been deprecated to move away from cron-utils. See
+ * <a href="https://github.com/Coreoz/Wisp/issues/14">issue #14</a> for details.
  */
+@Deprecated
 public class CronSchedule implements Schedule {
 
 	private static final CronParser UNIX_CRON_PARSER = new CronParser(
@@ -68,7 +73,10 @@ public class CronSchedule implements Schedule {
 	/**
 	 * Create a {@link Schedule} from a cron expression based on the Unix format,
 	 * e.g. 1 * * * * for each minute.
+	 *
+	 * @deprecated Use {@link CronExpressionScheduleTest#parse(String)} instead
 	 */
+	@Deprecated
 	public static CronSchedule parseUnixCron(String cronExpression) {
 		return new CronSchedule(UNIX_CRON_PARSER.parse(cronExpression));
 	}
@@ -76,7 +84,11 @@ public class CronSchedule implements Schedule {
 	/**
 	 * Create a {@link Schedule} from a cron expression based on the Quartz format,
 	 * e.g. 0 * * * * ? * for each minute.
+	 *
+	 * @deprecated Use {@link CronExpressionScheduleTest#parse(String)}
+	 * or {@link CronExpressionScheduleTest#parseWithSeconds(String)} instead
 	 */
+	@Deprecated
 	public static CronSchedule parseQuartzCron(String cronExpression) {
 		return new CronSchedule(QUARTZ_CRON_PARSER.parse(cronExpression));
 	}
