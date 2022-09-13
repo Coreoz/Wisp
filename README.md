@@ -98,8 +98,8 @@ Then to create a job which is executed every hour at the 30th minute,
 you can create the [schedule](#schedules) using: `CronExpressionSchedule.parse("30 * * * *")`.
 
 `CronExpressionSchedule` exposes two methods to create Cron expressions:
-- `CronExpressionSchedule.parse()` must be used to parse a 5 fields Cron expression (Unix standard), so without a second field
-- `CronExpressionSchedule.parseWithSeconds()` must be used to parse a 6 fields Cron expression, so the first field is the second
+- `CronExpressionSchedule.parse()` to parse a 5 fields Cron expression (Unix standard), so without a second field
+- `CronExpressionSchedule.parseWithSeconds()` to parse a 6 fields Cron expression, so the first field is the second
 
 
 Cron expression should be checked using a tool like:
