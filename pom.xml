@@ -3,17 +3,17 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.coreoz</groupId>
-	<artifactId>wisp</artifactId>
-	<version>2.3.1-SNAPSHOT</version>
-	<packaging>jar</packaging>
+	<artifactId>wisp-parent</artifactId>
+	<version>3.0.0-SNAPSHOT</version>
+	<packaging>pom</packaging>
 
-	<name>Wisp Scheduler</name>
-	<description>A simple Java Scheduler library with a minimal footprint and a straightforward API</description>
+	<name>Wisp Parent</name>
+	<description>Parent POM for Wisp</description>
 	<url>https://github.com/Coreoz/Wisp</url>
 
 	<organization>
 		<name>Coreoz</name>
-		<url>http://coreoz.com/</url>
+		<url>https://coreoz.com/</url>
 	</organization>
 
 	<licenses>
@@ -29,7 +29,7 @@
 			<name>Aurélien Manteaux</name>
 			<email>amanteaux@coreoz.com</email>
 			<organization>Coreoz</organization>
-			<organizationUrl>http://coreoz.com/</organizationUrl>
+			<organizationUrl>https://coreoz.com/</organizationUrl>
 		</developer>
 	</developers>
 
@@ -63,10 +63,17 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
+		<javadoc.java-version>8</javadoc.java-version>
 		<additionalparam>-Xdoclint:none</additionalparam>
 	</properties>
+
+	<modules>
+		<module>wisp-cluster-db</module>
+		<module>wisp-core</module>
+		<module>wisp-cron</module>
+	</modules>
 
 	<profiles>
 		<profile>
@@ -100,6 +107,7 @@
 						</executions>
 						<configuration>
 							<stylesheet>java</stylesheet>
+							<source>${javadoc.java-version}</source>
 						</configuration>
 					</plugin>
 					<plugin>
@@ -143,7 +151,7 @@
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.7.9</version>
+				<version>0.8.8</version>
 				<executions>
 					<execution>
 						<id>prepare-agent</id>
@@ -156,51 +164,52 @@
 		</plugins>
 	</build>
 
-	<dependencies>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>1.7.25</version>
-		</dependency>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.coreoz</groupId>
+				<artifactId>wisp</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.coreoz</groupId>
+				<artifactId>wisp-cron</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.coreoz</groupId>
+				<artifactId>wisp-cluster-db</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<version>1.18.20</version>
-			<scope>provided</scope>
-		</dependency>
+			<dependency>
+				<groupId>org.projectlombok</groupId>
+				<artifactId>lombok</artifactId>
+				<version>1.18.24</version>
+			</dependency>
 
-		<dependency>
-			<groupId>com.cronutils</groupId>
-			<artifactId>cron-utils</artifactId>
-			<version>9.1.6</version>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>ch.eitchnet</groupId>
-			<artifactId>cron</artifactId>
-			<version>1.6.2</version>
-			<optional>true</optional>
-		</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>2.0.3</version>
+			</dependency>
 
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.13.2</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.assertj</groupId>
-			<artifactId>assertj-core</artifactId>
-			<version>3.20.2</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-classic</artifactId>
-			<version>1.2.3</version>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+			<dependency>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<version>4.13.2</version>
+			</dependency>
+			<dependency>
+				<groupId>org.assertj</groupId>
+				<artifactId>assertj-core</artifactId>
+				<version>3.23.1</version>
+			</dependency>
+			<dependency>
+				<groupId>ch.qos.logback</groupId>
+				<artifactId>logback-classic</artifactId>
+				<version>1.4.1</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 </project>
