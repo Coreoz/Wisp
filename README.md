@@ -106,11 +106,13 @@ Cron expression should be checked using a tool like:
 - [Cronhub](https://crontab.cronhub.io/)
 - [Freeformater](https://www.freeformatter.com/cron-expression-generator-quartz.html) *but be careful to not include the year field. So for the Cron expression `25 * * * * * *` (to run every minute at the second 25), the correct expression must be `25 * * * * *`*
 
-Sometimes a use case is to disable a job through configuration. This use case can be addressed by setting a Cron expression that looks up the 31st of February: `* * * 31 2 *`
+Sometimes a use case is to disable a job through configuration. This use case can be addressed by setting a Cron expression that looks up the 31st of February:
+- `* * 31 2 *` when used with `CronExpressionSchedule.parse()`
+- `* * * 31 2 *` when used with `CronExpressionSchedule.parseWithSeconds()`
 
 Cron-utils was the default Cron implementation before Wisp 2.2.2. This has [changed in version 2.3.0](/../../issues/14).
 Documentation about cron-utils implementation can be found at [Wisp 2.2.2](/../../tree/2.2.2#cron).
-Migration from cron-utils is detailed in the [release note of Wisp 2.3.0](/../../releases/tag/2.3.0)
+Migration from cron-utils is detailed in the [release note of Wisp 2.3.0](/../../releases/tag/2.3.0).
 
 ### Custom schedules
 Custom schedules can be created,
