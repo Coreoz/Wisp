@@ -30,7 +30,7 @@ Include Wisp in your project:
 <dependency>
     <groupId>com.coreoz</groupId>
     <artifactId>wisp</artifactId>
-    <version>2.3.0</version>
+    <version>2.4.0</version>
 </dependency>
 ```
 
@@ -141,6 +141,25 @@ Two methods enable to fetch scheduler statistics:
   - active threads running jobs,
   - idle threads,
   - largest thread pool size.
+
+Cleanup old terminated jobs
+---------------------------
+The method `Scheduler.remove(String jobName)` enables to remove a jobs that is terminated, so in the `JobStatus.DONE` status. Once removed, the job is not returned anymore by `Scheduler.jobStatus()`.
+
+For an application that creates lots of jobs, to enable avoid memory leak, a cleaning job should be scheduled, for example:
+```java
+scheduler.schedule(
+    "Terminated jobs cleaner",
+    () -> scheduler
+        .jobStatus()
+        .stream()
+        .filter(job -> job.status() == JobStatus.DONE)
+        // Clean only jobs that have finished executing since at least 10 seconds
+        .filter(job -> job.lastExecutionEndedTimeInMillis() < (System.currentTimeMillis() - 10000))
+        .forEach(job -> scheduler.remove(job.name())),
+    Schedules.fixedDelaySchedule(Duration.ofMinutes(10))
+);
+```
 
 Long running jobs detection
 ---------------------------
