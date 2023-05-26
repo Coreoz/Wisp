@@ -7,6 +7,7 @@ import static org.junit.Assert.fail;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.coreoz.wisp.schedule.Schedule;
 import org.assertj.core.data.Offset;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -311,4 +312,25 @@ public class SchedulerTest {
 		assertThat(job.threadRunningJob()).isNull();
 	}
 
+	@Test
+	public void remove__verify_that_a_done_job_is_correctly_removed() {
+		Scheduler scheduler = new Scheduler();
+		Job job = scheduler.schedule(Utils.doNothing(), Schedule.willNeverBeExecuted);
+		assertThat(scheduler.jobStatus()).contains(job);
+		scheduler.remove(job.name());
+		assertThat(scheduler.jobStatus()).isEmpty();
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void remove__verify_that_a_non_existent_job_name_raises_an_illegal_argument_exception() {
+		Scheduler scheduler = new Scheduler();
+		scheduler.remove("does not exist");
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void remove__verify_that_a_non_done_job_name_raises_an_illegal_argument_exception() {
+		Scheduler scheduler = new Scheduler();
+		Job job = scheduler.schedule(Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(1000)));
+		scheduler.remove(job.name());
+	}
 }
