@@ -273,6 +273,27 @@ public final class Scheduler {
 	}
 
 	/**
+	 * Remove a terminated job, so with the status {@link JobStatus#DONE}),
+	 * from the monitored jobs. The monitored jobs are the ones
+	 * still referenced using {@link #jobStatus()}.
+	 *
+	 * This can be useful to avoid memory leak in case many jobs
+	 * with a short lifespan are created.
+	 * @param jobName The job name to remove
+	 * @throws IllegalArgumentException If there is no job corresponding to the job name or if the job is not on the status {@link JobStatus#DONE})
+	 */
+	public void remove(String jobName) {
+		Job jobToRemove = indexedJobsByName.get(jobName);
+		if (jobToRemove == null) {
+			throw new IllegalArgumentException("There is no existing job with the name " + jobName);
+		}
+		if(jobToRemove.status() != JobStatus.DONE) {
+			throw new IllegalArgumentException("Job is not terminated. Need to call the cancel() method before trying to remove it?");
+		}
+		indexedJobsByName.remove(jobName);
+	}
+
+	/**
 	 * Wait until the current running jobs are executed
 	 * and cancel jobs that are planned to be executed.
 	 * There is a 10 seconds timeout
@@ -341,7 +362,7 @@ public final class Scheduler {
 			}
 
 			Job job = new Job(
-				JobStatus.DONE,
+				JobStatus.SCHEDULED,
 				0L,
 				lastJob != null ? lastJob.executionsCount() : 0,
 				lastJob != null ? lastJob.lastExecutionStartedTimeInMillis() : null,
