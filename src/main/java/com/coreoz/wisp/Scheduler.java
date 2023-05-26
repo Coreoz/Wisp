@@ -341,7 +341,7 @@ public final class Scheduler {
 			}
 
 			Job job = new Job(
-				JobStatus.DONE,
+				JobStatus.SCHEDULED,
 				0L,
 				lastJob != null ? lastJob.executionsCount() : 0,
 				lastJob != null ? lastJob.lastExecutionStartedTimeInMillis() : null,
