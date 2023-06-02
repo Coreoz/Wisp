@@ -1,0 +1,56 @@
+
+root = true
+
+# Valeurs par defaut
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 120
+end_of_line = lf
+
+[*.{kt,kts}]
+indent_size = 4
+ktlint_code_style = official
+ktlint_standard_annotation = disabled
+ktlint_function_signature_rule_force_multiline_when_parameter_count_greater_or_equal_than = 4
+ktlint_ignore_back_ticked_identifier = false
+
+[*.java]
+indent_size = 4
+
+[*.conf]
+indent_size = 2
+
+[*.{ts,tsx,js,jsx}]
+indent_size = 2
+
+[*.xml]
+indent_size = 4
+
+[*.{css,scss,sass}]
+indent_size = 2
+
+[*.json]
+indent_size = 2
+
+[*.gradle]
+indent_size = 4
+
+[*.yml]
+indent_size = 2
+
+[*.properties]
+indent_size = 2
+
+[*.sh]
+indent_size = 2
+
+[*.html]
+indent_size = 2
+
+[*.md]
+max_line_length = 0
+trim_trailing_whitespace = false
