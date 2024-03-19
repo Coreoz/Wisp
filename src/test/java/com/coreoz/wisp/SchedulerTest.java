@@ -333,4 +333,9 @@ public class SchedulerTest {
 		Job job = scheduler.schedule(Utils.doNothing(), Schedules.fixedDelaySchedule(Duration.ofMillis(1000)));
 		scheduler.remove(job.name());
 	}
+
+        @Test(expected = NullPointerException.class)
+        public void should_fail_if_time_provider_is_null() {
+	    new Scheduler(SchedulerConfig.builder().maxThreads(1).timeProvider(null).build());
+	}
 }
