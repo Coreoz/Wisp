@@ -12,7 +12,7 @@ public class FixedDelaySchedule implements Schedule {
 
 	@Override
 	public long nextExecutionInMillis(long currentTimeInMillis, int executionsCount, Long lastExecutionTimeInMillis) {
-		return currentTimeInMillis + frequency.toMillis();
+		return currentTimeInMillis + frequency.toMillis() - (currentTimeInMillis % frequency.toMillis());
 	}
 
 	@Override
