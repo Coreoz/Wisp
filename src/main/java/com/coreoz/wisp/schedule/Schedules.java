@@ -15,6 +15,13 @@ public class Schedules {
 	}
 
 	/**
+	 * Execute a job at a fixed frequency which is guaranteed to be within 1ms of accuracy independent of system load
+	 */
+	public static Schedule fixedFrequencySchedule(Duration duration) {
+		return new FixedFrequencySchedule(duration);
+	}
+
+	/**
 	 * Execute a job at the same time once a day.
 	 * The time format must be "hh:mm" or "hh:mm:ss"
 	 */
