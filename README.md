@@ -70,7 +70,8 @@ else the next execution will likely be skipped (depending of the `Schedule` impl
 
 ### Basics schedules
 Basics schedules are referenced in the `Schedules` class:
-- `fixedDelaySchedule(Duration)`: execute a job at a fixed delay after each execution
+- `fixedDelaySchedule(Duration)`: execute a job at a fixed delay after each execution. The delay is not guaranteed to be consistent depending on system load
+- `fixedFrequencySchedule(Duration)`: execute a job at a fixed frequency independent of the time the method was called and the system load (like cron)
 - `executeAt(String)`: execute a job at the same time every day, e.g. `executeAt("05:30")`
 
 ### Composition
