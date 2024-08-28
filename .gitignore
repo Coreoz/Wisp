@@ -1,6 +1,21 @@
-/target/
-/.settings/
-/.classpath
-/.factorypath
-/.project
-/.README.md.html
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+.factorypath
+.README.md.html
+ 
+# Intellij
+.idea/
+*.iml
+*.iws
+ 
+# Mac
+.DS_Store
+ 
+# Maven
+log/
+target/
+
+*.xlsx
