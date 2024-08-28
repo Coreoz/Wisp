@@ -8,11 +8,10 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 public class FixedFrequencyScheduleTest {
-
 	@Test
 	public void test_next_execution_rounded() {
 		assertThat(Schedules.fixedFrequencySchedule(Duration.ofHours(2))
-				.nextExecutionInMillis(8000, 0, 0L))
+				.nextExecutionInMillis(TimeUnit.SECONDS.toMillis(8), 0, 0L))
 				.isEqualTo(TimeUnit.HOURS.toMillis(2));
 	}
 
@@ -21,5 +20,12 @@ public class FixedFrequencyScheduleTest {
 		assertThat(Schedules.fixedFrequencySchedule(Duration.ofHours(2))
 				.nextExecutionInMillis(TimeUnit.HOURS.toMillis(3), 0, 0L))
 				.isEqualTo(TimeUnit.HOURS.toMillis(4));
+	}
+
+	@Test
+	public void test_next_execution_not_rounded() {
+		assertThat(Schedules.fixedFrequencySchedule(Duration.ofHours(2))
+			.nextExecutionInMillis(TimeUnit.HOURS.toMillis(4), 0, 0L))
+			.isEqualTo(TimeUnit.HOURS.toMillis(6));
 	}
 }
