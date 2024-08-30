@@ -1,7 +1,7 @@
 Wisp Scheduler
 ==============
 
-[![Build Status](https://travis-ci.org/Coreoz/Wisp.svg?branch=master)](https://travis-ci.org/Coreoz/Wisp)
+[![Build Status](https://github.com/Coreoz/Wisp/actions/workflows/maven.yml/badge.svg)](./actions)
 [![Coverage Status](https://coveralls.io/repos/github/Coreoz/Wisp/badge.svg?branch=master)](https://coveralls.io/github/Coreoz/Wisp?branch=master)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.coreoz/wisp/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.coreoz/wisp)
 
