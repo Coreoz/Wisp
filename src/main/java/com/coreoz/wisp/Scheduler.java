@@ -12,11 +12,9 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,10 +35,7 @@ import lombok.SneakyThrows;
  * The scheduler will never execute the same job twice at a time.
  */
 public final class Scheduler {
-
 	private static final Logger logger = LoggerFactory.getLogger(Scheduler.class);
-
-	private static final AtomicInteger threadCounter = new AtomicInteger(0);
 
 	/**
 	 * @deprecated Default values are available in {@link SchedulerConfig}
@@ -109,7 +104,7 @@ public final class Scheduler {
 			config.getMaxThreads(),
 			config.getThreadsKeepAliveTime().toMillis(),
 			TimeUnit.MILLISECONDS,
-			new WispThreadFactory()
+			config.getThreadFactory().get()
 		);
 		// run job launcher thread
 		Thread launcherThread = new Thread(this::launcher, "Wisp Monitor");
@@ -225,7 +220,7 @@ public final class Scheduler {
 	 *
 	 * @param jobName The job name to cancel
 	 * @return The promise that succeed when the job is correctly cancelled
-	 * and will not be executed again. If the job is running when {@link #cancel(String)}
+	 * and will not be executed again. If the job is running when <code>cancel(String)</code>
 	 * is called, the promise will succeed when the job has finished executing.
 	 * @throws IllegalArgumentException if there is no job corresponding to the job name.
 	 */
@@ -275,8 +270,8 @@ public final class Scheduler {
 	/**
 	 * Remove a terminated job, so with the status {@link JobStatus#DONE}),
 	 * from the monitored jobs. The monitored jobs are the ones
-	 * still referenced using {@link #jobStatus()}.
-	 *
+	 * still referenced using {@link #jobStatus()}.<br>
+	 * <br>
 	 * This can be useful to avoid memory leak in case many jobs
 	 * with a short lifespan are created.
 	 * @param jobName The job name to remove
@@ -521,19 +516,4 @@ public final class Scheduler {
 			scheduleNextExecution(jobToRun);
 		}
 	}
-
-	private static class WispThreadFactory implements ThreadFactory {
-		@Override
-		public Thread newThread(Runnable r) {
-			Thread thread = new Thread(r, "Wisp Scheduler Worker #" + threadCounter.getAndIncrement());
-			if (thread.isDaemon()) {
-				thread.setDaemon(false);
-			}
-			if (thread.getPriority() != Thread.NORM_PRIORITY) {
-				thread.setPriority(Thread.NORM_PRIORITY);
-			}
-			return thread;
-		}
-	}
-
 }
