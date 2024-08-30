@@ -189,6 +189,7 @@ public class SchedulerCancelTest {
 
 		scheduler.cancel("job").toCompletableFuture().get(1, TimeUnit.SECONDS);
 		int beforeScheduledAgainCount = job.executionsCount();
+		assertThat(beforeScheduledAgainCount).as("First job must have enough time to execute").isGreaterThan(0);
 
 		Queue<ScheduledExecution> scheduledExecutions = new ConcurrentLinkedQueue<>();
 		scheduler.schedule("job", doNothing(), (long currentTimeInMillis, int executionsCount, Long lastExecutionEndedTimeInMillis) -> {
