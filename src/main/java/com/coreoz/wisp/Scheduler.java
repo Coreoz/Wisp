@@ -34,7 +34,7 @@ import lombok.SneakyThrows;
  * A job is executed only once at a time.
  * The scheduler will never execute the same job twice at a time.
  */
-public final class Scheduler {
+public final class Scheduler implements AutoCloseable {
 	private static final Logger logger = LoggerFactory.getLogger(Scheduler.class);
 
 	/**
@@ -515,5 +515,10 @@ public final class Scheduler {
 		synchronized (this) {
 			scheduleNextExecution(jobToRun);
 		}
+	}
+
+	@Override
+	public void close() {
+		gracefullyShutdown();
 	}
 }
