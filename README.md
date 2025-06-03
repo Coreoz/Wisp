@@ -49,8 +49,8 @@ A project should generally contain only one instance of a `Scheduler`.
 So either a dependency injection framework handles this instance,
 or either a static instance of `Scheduler` should be created.
 
-In production, it is generally a good practice to configure the
-[monitor for long running jobs detection](#long-running-jobs-detection).
+**In production, it is generally a good practice to configure the
+[monitor for long running jobs detection](#long-running-jobs-detection)**.
 
 Changelog and upgrade instructions
 ----------------------------------
