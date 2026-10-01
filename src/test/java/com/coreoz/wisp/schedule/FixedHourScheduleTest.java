@@ -9,6 +9,11 @@ import java.time.ZonedDateTime;
 
 import org.junit.Test;
 
+import com.coreoz.wisp.Job;
+import com.coreoz.wisp.JobStatus;
+import com.coreoz.wisp.Scheduler;
+import com.coreoz.wisp.SchedulerConfig;
+
 public class FixedHourScheduleTest {
 
 	@Test
@@ -128,6 +133,42 @@ public class FixedHourScheduleTest {
 		assertThat(
 			new FixedHourSchedule("00:00:00", ectZone).durationUntilNextExecutionInMillis(midnight, midnight)
 		).isEqualTo(24 * 60 * 60 * 1000);
+	}
+
+	@Test
+	public void should_skip_past_execution_during_repeated_hour() {
+		ZoneId zone = ZoneId.of("Europe/Paris");
+		long currentTime = ZonedDateTime.parse("2016-10-30T02:15+01:00[Europe/Paris]").toInstant().toEpochMilli();
+		long nextDay = ZonedDateTime.parse("2016-10-31T02:30+01:00[Europe/Paris]").toInstant().toEpochMilli();
+
+		assertThat(new FixedHourSchedule("02:30", zone).nextExecutionInMillis(currentTime, 0, null))
+			.isEqualTo(nextDay);
+	}
+
+	@Test
+	public void should_wait_for_adjusted_execution_during_spring_gap() {
+		ZoneId zone = ZoneId.of("Europe/Paris");
+		long currentTime = ZonedDateTime.parse("2016-03-27T03:15+02:00[Europe/Paris]").toInstant().toEpochMilli();
+		long executionTime = ZonedDateTime.parse("2016-03-27T03:30+02:00[Europe/Paris]").toInstant().toEpochMilli();
+		long nextDay = ZonedDateTime.parse("2016-03-28T02:30+02:00[Europe/Paris]").toInstant().toEpochMilli();
+		FixedHourSchedule schedule = new FixedHourSchedule("02:30", zone);
+
+		assertThat(schedule.nextExecutionInMillis(currentTime, 0, null)).isEqualTo(executionTime);
+		assertThat(schedule.nextExecutionInMillis(executionTime, 0, null)).isEqualTo(executionTime);
+		assertThat(schedule.nextExecutionInMillis(executionTime, 1, executionTime)).isEqualTo(nextDay);
+		assertThat(schedule.nextExecutionInMillis(executionTime + 1, 1, executionTime)).isEqualTo(nextDay);
+	}
+
+	@Test
+	public void should_keep_daily_job_scheduled_during_repeated_hour() {
+		long currentTime = ZonedDateTime.parse("2016-10-30T02:15+01:00[Europe/Paris]").toInstant().toEpochMilli();
+		long nextDay = ZonedDateTime.parse("2016-10-31T02:30+01:00[Europe/Paris]").toInstant().toEpochMilli();
+		try (Scheduler scheduler = new Scheduler(SchedulerConfig.builder().timeProvider(() -> currentTime).build())) {
+			Job job = scheduler.schedule("daily", () -> {}, new FixedHourSchedule("02:30", ZoneId.of("Europe/Paris")));
+
+			assertThat(job.status()).isEqualTo(JobStatus.SCHEDULED);
+			assertThat(job.nextExecutionTimeInMillis()).isEqualTo(nextDay);
+		}
 	}
 
 }
