@@ -64,8 +64,9 @@ public class FixedHourSchedule implements Schedule {
 	}
 
 	private ZonedDateTime nextExecutionDateTime(ZonedDateTime currentDateTime, boolean nextExecutionShouldBeNextDay) {
-		if(!nextExecutionShouldBeNextDay && currentDateTime.toLocalTime().compareTo(executionTime) <= 0) {
-			return executionTime.atDate(currentDateTime.toLocalDate()).atZone(zoneId);
+		ZonedDateTime executionDateTime = executionTime.atDate(currentDateTime.toLocalDate()).atZone(zoneId);
+		if(!nextExecutionShouldBeNextDay && !executionDateTime.isBefore(currentDateTime)) {
+			return executionDateTime;
 		}
 		return executionTime.atDate(currentDateTime.toLocalDate()).plusDays(1).atZone(zoneId);
 	}
